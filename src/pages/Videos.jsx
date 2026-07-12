@@ -22,6 +22,7 @@ export default function Videos() {
   const [search, setSearch] = useState('');
   const [filterRegion, setFilterRegion] = useState('all');
   const [filterSkill, setFilterSkill] = useState('all');
+  const [filterDiagnosis, setFilterDiagnosis] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -59,6 +60,7 @@ export default function Videos() {
     if (search && !item.title?.toLowerCase().includes(search.toLowerCase())) return false;
     if (filterRegion !== 'all' && !item.brain_region_ids?.includes(filterRegion)) return false;
     if (filterSkill !== 'all' && !item.functional_skill_ids?.includes(filterSkill)) return false;
+    if (filterDiagnosis !== 'all' && !item.diagnosis_ids?.includes(filterDiagnosis)) return false;
     return true;
   });
 
@@ -119,6 +121,13 @@ export default function Videos() {
           <SelectContent>
             <SelectItem value="all">All Functional Skills</SelectItem>
             {skills.filter(s => s.status === 'active').map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterDiagnosis} onValueChange={setFilterDiagnosis}>
+          <SelectTrigger className="w-[200px] bg-card"><SelectValue placeholder="Diagnosis" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Diagnoses</SelectItem>
+            {diagnoses.filter(d => d.status === 'active').map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
