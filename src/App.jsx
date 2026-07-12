@@ -12,7 +12,8 @@ import Clinics from '@/pages/Clinics';
 import Therapists from '@/pages/Therapists';
 import Patients from '@/pages/Patients';
 import PatientDetail from '@/pages/PatientDetail';
-import ContentLibrary from '@/pages/ContentLibrary';
+import Videos from '@/pages/Videos';
+import Games from '@/pages/Games';
 import Taxonomy from '@/pages/Taxonomy';
 import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
@@ -49,7 +50,8 @@ const AuthenticatedApp = () => {
         <Route path="/therapists" element={<Therapists />} />
         <Route path="/patients" element={<Patients />} />
         <Route path="/patients/:id" element={<PatientDetail />} />
-        <Route path="/content" element={<ContentLibrary />} />
+        <Route path="/videos" element={<Videos />} />
+        <Route path="/games" element={<Games />} />
         <Route path="/taxonomy" element={<Taxonomy />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />

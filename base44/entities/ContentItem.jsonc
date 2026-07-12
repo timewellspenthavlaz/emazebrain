@@ -35,6 +35,22 @@
       "type": "string",
       "title": "Thumbnail URL"
     },
+    "therapist_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Connected Therapist IDs"
+    },
+    "therapist_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Connected Therapist Names"
+    },
     "brain_region_ids": {
       "type": "array",
       "items": {

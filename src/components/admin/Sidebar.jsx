@@ -6,6 +6,7 @@ import {
   Stethoscope,
   Users,
   Film,
+  Gamepad2,
   Network,
   BarChart3,
   Settings,
@@ -33,7 +34,8 @@ const navGroups = [
   {
     label: 'Content & Taxonomy',
     items: [
-      { label: 'Content Library', icon: Film, path: '/content' },
+      { label: 'Videos', icon: Film, path: '/videos' },
+      { label: 'Games', icon: Gamepad2, path: '/games' },
       { label: 'Taxonomy', icon: Network, path: '/taxonomy' }
     ]
   },
