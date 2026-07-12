@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Plus, Pencil, Power, ExternalLink, Film, Search } from 'lucide-react';
+import { Plus, Pencil, Power, ExternalLink, Film, Search, Eye } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
 import StatusBadge from '@/components/admin/StatusBadge';
 import ContentFormDialog from '@/components/content/ContentFormDialog';
+import ContentPreviewDrawer from '@/components/content/ContentPreviewDrawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +26,7 @@ export default function Videos() {
   const [filterDiagnosis, setFilterDiagnosis] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -198,6 +200,7 @@ export default function Videos() {
                     <td className="px-4 py-3"><StatusBadge status={item.status} customLabel={item.status === 'active' ? 'Available' : 'Unavailable'} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Quick Preview"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleStatus(item)}>
                           <Power className={cn("w-4 h-4", item.status === 'active' ? 'text-emerald-500' : 'text-gray-400')} />
@@ -214,6 +217,10 @@ export default function Videos() {
 
       <ContentFormDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} contentType="video"
         therapists={therapists} brainRegions={brainRegions} skills={skills} diagnoses={diagnoses} onSaved={loadData} />
+
+      <ContentPreviewDrawer open={!!previewItem} onOpenChange={(v) => { if (!v) setPreviewItem(null); }}
+        item={previewItem} contentType="video"
+        brainRegions={brainRegions} skills={skills} diagnoses={diagnoses} therapists={therapists} />
     </div>
   );
 }

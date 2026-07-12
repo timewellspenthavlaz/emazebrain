@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Plus, Pencil, Power, ExternalLink, Gamepad2, Search } from 'lucide-react';
+import { Plus, Pencil, Power, ExternalLink, Gamepad2, Search, Eye } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
 import StatusBadge from '@/components/admin/StatusBadge';
 import ContentFormDialog from '@/components/content/ContentFormDialog';
+import ContentPreviewDrawer from '@/components/content/ContentPreviewDrawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,6 +25,7 @@ export default function Games() {
   const [filterDiagnosis, setFilterDiagnosis] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -185,6 +187,7 @@ export default function Games() {
                     <td className="px-4 py-3">{renderTags(item)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Quick Preview"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleStatus(item)}>
                           <Power className={cn("w-4 h-4", item.status === 'active' ? 'text-emerald-500' : 'text-gray-400')} />
@@ -201,6 +204,10 @@ export default function Games() {
 
       <ContentFormDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} contentType="game"
         therapists={therapists} brainRegions={brainRegions} skills={skills} diagnoses={diagnoses} onSaved={loadData} />
+
+      <ContentPreviewDrawer open={!!previewItem} onOpenChange={(v) => { if (!v) setPreviewItem(null); }}
+        item={previewItem} contentType="game"
+        brainRegions={brainRegions} skills={skills} diagnoses={diagnoses} therapists={therapists} />
     </div>
   );
 }
