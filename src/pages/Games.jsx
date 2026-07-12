@@ -5,6 +5,7 @@ import PageHeader from '@/components/admin/PageHeader';
 import StatusBadge from '@/components/admin/StatusBadge';
 import ContentFormDialog from '@/components/content/ContentFormDialog';
 import ContentPreviewDrawer from '@/components/content/ContentPreviewDrawer';
+import MediaPreviewDialog from '@/components/content/MediaPreviewDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +27,7 @@ export default function Games() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
+  const [mediaItem, setMediaItem] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -168,9 +170,9 @@ export default function Games() {
                     <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] line-clamp-3">{item.description || '—'}</td>
                     <td className="px-4 py-3">
                       {item.url ? (
-                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs inline-flex items-center gap-1">
-                          <ExternalLink className="w-3 h-3" /> Open
-                        </a>
+                        <button onClick={() => setMediaItem(item)} className="text-primary hover:underline text-xs inline-flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" /> Preview
+                        </button>
                       ) : '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -208,6 +210,9 @@ export default function Games() {
       <ContentPreviewDrawer open={!!previewItem} onOpenChange={(v) => { if (!v) setPreviewItem(null); }}
         item={previewItem} contentType="game"
         brainRegions={brainRegions} skills={skills} diagnoses={diagnoses} therapists={therapists} />
+
+      <MediaPreviewDialog open={!!mediaItem} onOpenChange={(v) => { if (!v) setMediaItem(null); }}
+        item={mediaItem} contentType="game" />
     </div>
   );
 }
