@@ -1,0 +1,117 @@
+{
+  "name": "TherapyLog",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "title": "Patient ID"
+    },
+    "patient_name": {
+      "type": "string",
+      "title": "Patient Name"
+    },
+    "therapist_id": {
+      "type": "string",
+      "title": "Therapist ID"
+    },
+    "therapist_name": {
+      "type": "string",
+      "title": "Therapist Name"
+    },
+    "clinic_id": {
+      "type": "string",
+      "title": "Clinic ID"
+    },
+    "clinic_name": {
+      "type": "string",
+      "title": "Clinic Name"
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Session Date & Time"
+    },
+    "session_summary": {
+      "type": "string",
+      "title": "Session Summary"
+    },
+    "clinical_notes": {
+      "type": "string",
+      "title": "Clinical Notes"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 0,
+      "title": "Duration (minutes)"
+    },
+    "location": {
+      "type": "string",
+      "enum": [
+        "in_clinic",
+        "at_home"
+      ],
+      "default": "in_clinic",
+      "title": "Location"
+    },
+    "progress_score": {
+      "type": "number",
+      "default": 0,
+      "title": "Progress Score (0-100)"
+    },
+    "signed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Signed At (UTC)"
+    },
+    "signed_by_id": {
+      "type": "string",
+      "title": "Signed By (User ID)"
+    },
+    "signed_by_name": {
+      "type": "string",
+      "title": "Signed By (Name)"
+    },
+    "signature_hash": {
+      "type": "string",
+      "title": "Digital Signature Hash"
+    },
+    "amendments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "amended_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amended_by_id": {
+            "type": "string"
+          },
+          "amended_by_name": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "title": "Amendments (Addendums)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "signed",
+        "amended"
+      ],
+      "default": "signed",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "patient_id",
+    "therapist_id",
+    "session_date",
+    "clinical_notes"
+  ]
+}
