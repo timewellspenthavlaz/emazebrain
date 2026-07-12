@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Plus, Stethoscope, Mail, Phone, Pencil, Power, CheckCircle2, XCircle } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import TableToolbar from '@/components/admin/TableToolbar';
 
 export default function Therapists() {
   const { toast } = useToast();
@@ -19,6 +20,11 @@ export default function Therapists() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', clinic_id: '', clinic_name: '', specialty: '', license_number: '', status: 'pending', signup_method: 'admin_created' });
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterClinic, setFilterClinic] = useState('all');
+  const [filterSource, setFilterSource] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => { loadData(); }, []);
 
@@ -92,6 +98,37 @@ export default function Therapists() {
     loadData();
   };
 
+  const filteredAndSorted = useMemo(() => {
+    let result = therapists.filter(t => {
+      if (search) {
+        const lower = search.toLowerCase();
+        const matches = ['full_name', 'email', 'clinic_name', 'specialty', 'license_number'].some(k =>
+          t[k]?.toString().toLowerCase().includes(lower)
+        );
+        if (!matches) return false;
+      }
+      if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+      if (filterClinic !== 'all' && t.clinic_id !== filterClinic) return false;
+      if (filterSource !== 'all' && t.signup_method !== filterSource) return false;
+      return true;
+    });
+    const sortFns = {
+      newest: (a, b) => new Date(b.created_date) - new Date(a.created_date),
+      oldest: (a, b) => new Date(a.created_date) - new Date(b.created_date),
+      name_asc: (a, b) => (a.full_name || '').localeCompare(b.full_name || ''),
+      name_desc: (a, b) => (b.full_name || '').localeCompare(a.full_name || ''),
+      clinic_asc: (a, b) => (a.clinic_name || '').localeCompare(b.clinic_name || ''),
+    };
+    return result.sort(sortFns[sortBy] || sortFns.newest);
+  }, [therapists, search, filterStatus, filterClinic, filterSource, sortBy]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setFilterStatus('all');
+    setFilterClinic('all');
+    setFilterSource('all');
+  };
+
   const columns = [
     { key: 'full_name', label: 'Therapist', sortable: true, render: (row) => (
       <div className="flex items-center gap-3">
@@ -150,13 +187,40 @@ export default function Therapists() {
       {loading ? (
         <div className="flex justify-center h-64"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div></div>
       ) : (
-        <DataTable
-          data={therapists}
-          columns={columns}
-          searchKeys={['full_name', 'email', 'clinic_name', 'specialty']}
-          searchPlaceholder="Search therapists..."
-          emptyMessage="No therapists found."
-        />
+        <>
+          <TableToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search therapists..."
+            filters={[
+              { key: 'status', label: 'Status', value: filterStatus, onChange: setFilterStatus, allLabel: 'All Statuses', options: [
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+                { value: 'pending', label: 'Pending' },
+              ]},
+              { key: 'clinic', label: 'Clinic', value: filterClinic, onChange: setFilterClinic, allLabel: 'All Clinics', options: clinics.map(c => ({ value: c.id, label: c.name })) },
+              { key: 'source', label: 'Source', value: filterSource, onChange: setFilterSource, allLabel: 'All Sources', options: [
+                { value: 'admin_created', label: 'Admin Created' },
+                { value: 'self_registered', label: 'Self Registered' },
+              ]},
+            ]}
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'name_asc', label: 'Name (A-Z)' },
+              { value: 'name_desc', label: 'Name (Z-A)' },
+              { value: 'clinic_asc', label: 'Clinic (A-Z)' },
+            ]}
+            onClear={clearFilters}
+          />
+          <DataTable
+            data={filteredAndSorted}
+            columns={columns}
+            emptyMessage="No therapists found."
+          />
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

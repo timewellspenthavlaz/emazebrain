@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Plus, Building2, Mail, Phone, MapPin, Pencil, Power } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import TableToolbar from '@/components/admin/TableToolbar';
 
 export default function Clinics() {
   const { toast } = useToast();
@@ -19,6 +20,11 @@ export default function Clinics() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', address: '', city: '', state: '', contact_email: '', contact_phone: '', status: 'active', description: '' });
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCity, setFilterCity] = useState('all');
+  const [filterState, setFilterState] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => { loadClinics(); }, []);
 
@@ -70,6 +76,40 @@ export default function Clinics() {
     }
   };
 
+  const cities = useMemo(() => [...new Set(clinics.map(c => c.city).filter(Boolean))].sort(), [clinics]);
+  const states = useMemo(() => [...new Set(clinics.map(c => c.state).filter(Boolean))].sort(), [clinics]);
+
+  const filteredAndSorted = useMemo(() => {
+    let result = clinics.filter(c => {
+      if (search) {
+        const lower = search.toLowerCase();
+        const matches = ['name', 'city', 'state', 'contact_email', 'contact_phone'].some(k =>
+          c[k]?.toString().toLowerCase().includes(lower)
+        );
+        if (!matches) return false;
+      }
+      if (filterStatus !== 'all' && c.status !== filterStatus) return false;
+      if (filterCity !== 'all' && c.city !== filterCity) return false;
+      if (filterState !== 'all' && c.state !== filterState) return false;
+      return true;
+    });
+    const sortFns = {
+      newest: (a, b) => new Date(b.created_date) - new Date(a.created_date),
+      oldest: (a, b) => new Date(a.created_date) - new Date(b.created_date),
+      name_asc: (a, b) => (a.name || '').localeCompare(b.name || ''),
+      name_desc: (a, b) => (b.name || '').localeCompare(a.name || ''),
+      city_asc: (a, b) => (a.city || '').localeCompare(b.city || ''),
+    };
+    return result.sort(sortFns[sortBy] || sortFns.newest);
+  }, [clinics, search, filterStatus, filterCity, filterState, sortBy]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setFilterStatus('all');
+    setFilterCity('all');
+    setFilterState('all');
+  };
+
   const columns = [
     { key: 'name', label: 'Clinic', sortable: true, render: (row) => (
       <div className="flex items-center gap-3">
@@ -118,13 +158,37 @@ export default function Clinics() {
       {loading ? (
         <div className="flex justify-center h-64"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div></div>
       ) : (
-        <DataTable
-          data={clinics}
-          columns={columns}
-          searchKeys={['name', 'city', 'state', 'contact_email']}
-          searchPlaceholder="Search clinics..."
-          emptyMessage="No clinics found. Add your first clinic."
-        />
+        <>
+          <TableToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search clinics..."
+            filters={[
+              { key: 'status', label: 'Status', value: filterStatus, onChange: setFilterStatus, allLabel: 'All Statuses', options: [
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+                { value: 'pending', label: 'Pending' },
+              ]},
+              { key: 'city', label: 'City', value: filterCity, onChange: setFilterCity, allLabel: 'All Cities', options: cities.map(c => ({ value: c, label: c })) },
+              { key: 'state', label: 'State', value: filterState, onChange: setFilterState, allLabel: 'All States', options: states.map(s => ({ value: s, label: s })) },
+            ]}
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'name_asc', label: 'Name (A-Z)' },
+              { value: 'name_desc', label: 'Name (Z-A)' },
+              { value: 'city_asc', label: 'City (A-Z)' },
+            ]}
+            onClear={clearFilters}
+          />
+          <DataTable
+            data={filteredAndSorted}
+            columns={columns}
+            emptyMessage="No clinics found. Add your first clinic."
+          />
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

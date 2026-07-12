@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Plus, Users, Pencil, Power, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import TableToolbar from '@/components/admin/TableToolbar';
 
 export default function Patients() {
   const navigate = useNavigate();
@@ -29,6 +30,13 @@ export default function Patients() {
     diagnosis_ids: [], diagnosis_names: [], level: 'beginner', status: 'active',
     signup_method: 'admin_created', notes: ''
   });
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterClinic, setFilterClinic] = useState('all');
+  const [filterTherapist, setFilterTherapist] = useState('all');
+  const [filterAgeGroup, setFilterAgeGroup] = useState('all');
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => { loadData(); }, []);
 
@@ -101,6 +109,42 @@ export default function Patients() {
     setForm({ ...form, diagnosis_ids: current.includes(id) ? current.filter(x => x !== id) : [...current, id] });
   };
 
+  const filteredAndSorted = useMemo(() => {
+    let result = patients.filter(p => {
+      if (search) {
+        const lower = search.toLowerCase();
+        const matches = ['full_name', 'clinic_name', 'therapist_name'].some(k =>
+          p[k]?.toString().toLowerCase().includes(lower)
+        );
+        if (!matches) return false;
+      }
+      if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+      if (filterClinic !== 'all' && p.clinic_id !== filterClinic) return false;
+      if (filterTherapist !== 'all' && p.therapist_id !== filterTherapist) return false;
+      if (filterAgeGroup !== 'all' && p.age_group !== filterAgeGroup) return false;
+      if (filterLevel !== 'all' && p.level !== filterLevel) return false;
+      return true;
+    });
+    const sortFns = {
+      newest: (a, b) => new Date(b.created_date) - new Date(a.created_date),
+      oldest: (a, b) => new Date(a.created_date) - new Date(b.created_date),
+      name_asc: (a, b) => (a.full_name || '').localeCompare(b.full_name || ''),
+      name_desc: (a, b) => (b.full_name || '').localeCompare(a.full_name || ''),
+      age_asc: (a, b) => (a.age_group || '').localeCompare(b.age_group || ''),
+      level_asc: (a, b) => (a.level || '').localeCompare(b.level || ''),
+    };
+    return result.sort(sortFns[sortBy] || sortFns.newest);
+  }, [patients, search, filterStatus, filterClinic, filterTherapist, filterAgeGroup, filterLevel, sortBy]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setFilterStatus('all');
+    setFilterClinic('all');
+    setFilterTherapist('all');
+    setFilterAgeGroup('all');
+    setFilterLevel('all');
+  };
+
   const columns = [
     { key: 'full_name', label: 'Patient', sortable: true, render: (row) => (
       <div className="flex items-center gap-3">
@@ -154,14 +198,51 @@ export default function Patients() {
       {loading ? (
         <div className="flex justify-center h-64"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div></div>
       ) : (
-        <DataTable
-          data={patients}
-          columns={columns}
-          searchKeys={['full_name', 'clinic_name', 'therapist_name']}
-          searchPlaceholder="Search patients..."
-          emptyMessage="No patients found."
-          onRowClick={(row) => navigate(`/patients/${row.id}`)}
-        />
+        <>
+          <TableToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search patients..."
+            filters={[
+              { key: 'status', label: 'Status', value: filterStatus, onChange: setFilterStatus, allLabel: 'All Statuses', options: [
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+                { value: 'pending', label: 'Pending' },
+              ]},
+              { key: 'clinic', label: 'Clinic', value: filterClinic, onChange: setFilterClinic, allLabel: 'All Clinics', options: clinics.map(c => ({ value: c.id, label: c.name })) },
+              { key: 'therapist', label: 'Therapist', value: filterTherapist, onChange: setFilterTherapist, allLabel: 'All Therapists', options: therapists.map(t => ({ value: t.id, label: t.full_name })) },
+              { key: 'age', label: 'Age Group', value: filterAgeGroup, onChange: setFilterAgeGroup, allLabel: 'All Ages', options: [
+                { value: '3-5', label: '3-5 years' },
+                { value: '6-8', label: '6-8 years' },
+                { value: '9-11', label: '9-11 years' },
+                { value: '12-14', label: '12-14 years' },
+                { value: '15-18', label: '15-18 years' },
+              ]},
+              { key: 'level', label: 'Level', value: filterLevel, onChange: setFilterLevel, allLabel: 'All Levels', options: [
+                { value: 'beginner', label: 'Beginner' },
+                { value: 'intermediate', label: 'Intermediate' },
+                { value: 'advanced', label: 'Advanced' },
+              ]},
+            ]}
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={[
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'name_asc', label: 'Name (A-Z)' },
+              { value: 'name_desc', label: 'Name (Z-A)' },
+              { value: 'age_asc', label: 'Age Group' },
+              { value: 'level_asc', label: 'Level' },
+            ]}
+            onClear={clearFilters}
+          />
+          <DataTable
+            data={filteredAndSorted}
+            columns={columns}
+            emptyMessage="No patients found."
+            onRowClick={(row) => navigate(`/patients/${row.id}`)}
+          />
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
