@@ -1,0 +1,48 @@
+{
+  "name": "Clinic",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Clinic Name"
+    },
+    "address": {
+      "type": "string",
+      "title": "Address"
+    },
+    "city": {
+      "type": "string",
+      "title": "City"
+    },
+    "state": {
+      "type": "string",
+      "title": "State"
+    },
+    "contact_email": {
+      "type": "string",
+      "format": "email",
+      "title": "Contact Email"
+    },
+    "contact_phone": {
+      "type": "string",
+      "title": "Contact Phone"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending"
+      ],
+      "default": "active",
+      "title": "Status"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

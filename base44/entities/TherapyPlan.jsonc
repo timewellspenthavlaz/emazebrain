@@ -1,0 +1,74 @@
+{
+  "name": "TherapyPlan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Plan Name"
+    },
+    "patient_id": {
+      "type": "string",
+      "title": "Patient ID"
+    },
+    "patient_name": {
+      "type": "string",
+      "title": "Patient Name"
+    },
+    "therapist_id": {
+      "type": "string",
+      "title": "Therapist ID"
+    },
+    "therapist_name": {
+      "type": "string",
+      "title": "Therapist Name"
+    },
+    "clinic_id": {
+      "type": "string",
+      "title": "Clinic ID"
+    },
+    "clinic_name": {
+      "type": "string",
+      "title": "Clinic Name"
+    },
+    "content_item_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Content Item IDs"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "in_clinic",
+        "at_home"
+      ],
+      "default": "in_clinic",
+      "title": "Plan Type"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Favorite"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "completed"
+      ],
+      "default": "active",
+      "title": "Status"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "name",
+    "patient_id"
+  ]
+}

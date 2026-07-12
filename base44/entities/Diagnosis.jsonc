@@ -1,0 +1,58 @@
+{
+  "name": "Diagnosis",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Diagnosis Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "brain_region_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Brain Region IDs"
+    },
+    "brain_region_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Brain Region Names"
+    },
+    "functional_skill_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Functional Skill IDs"
+    },
+    "functional_skill_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Functional Skill Names"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "name": "Patient",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "title": "Date of Birth"
+    },
+    "age_group": {
+      "type": "string",
+      "enum": [
+        "3-5",
+        "6-8",
+        "9-11",
+        "12-14",
+        "15-18"
+      ],
+      "title": "Age Group"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "other"
+      ],
+      "title": "Gender"
+    },
+    "clinic_id": {
+      "type": "string",
+      "title": "Clinic ID"
+    },
+    "clinic_name": {
+      "type": "string",
+      "title": "Clinic Name"
+    },
+    "therapist_id": {
+      "type": "string",
+      "title": "Therapist ID"
+    },
+    "therapist_name": {
+      "type": "string",
+      "title": "Therapist Name"
+    },
+    "diagnosis_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Diagnosis IDs"
+    },
+    "diagnosis_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Diagnosis Names"
+    },
+    "brain_region_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Brain Region IDs"
+    },
+    "functional_skill_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Functional Skill IDs"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "default": "beginner",
+      "title": "Level"
+    },
+    "pulse": {
+      "type": "number",
+      "title": "Pulse Score"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending"
+      ],
+      "default": "active",
+      "title": "Status"
+    },
+    "signup_method": {
+      "type": "string",
+      "enum": [
+        "admin_created",
+        "self_registered"
+      ],
+      "default": "admin_created",
+      "title": "Signup Method"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "full_name"
+  ]
+}

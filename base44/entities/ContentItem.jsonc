@@ -1,0 +1,124 @@
+{
+  "name": "ContentItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "game"
+      ],
+      "title": "Content Type"
+    },
+    "link_type": {
+      "type": "string",
+      "enum": [
+        "external",
+        "cdn_upload"
+      ],
+      "default": "external",
+      "title": "Link Type"
+    },
+    "url": {
+      "type": "string",
+      "title": "URL"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "title": "Thumbnail URL"
+    },
+    "brain_region_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Brain Region IDs"
+    },
+    "functional_skill_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Functional Skill IDs"
+    },
+    "diagnosis_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Diagnosis IDs"
+    },
+    "age_groups": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "3-5",
+          "6-8",
+          "9-11",
+          "12-14",
+          "15-18"
+        ]
+      },
+      "default": [],
+      "title": "Age Groups"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "default": "beginner",
+      "title": "Difficulty Level"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 5,
+      "title": "Duration (minutes)"
+    },
+    "usage_setting": {
+      "type": "string",
+      "enum": [
+        "in_clinic",
+        "at_home",
+        "both"
+      ],
+      "default": "both",
+      "title": "Usage Setting"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "title": "Status"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Tags"
+    }
+  },
+  "required": [
+    "title",
+    "type"
+  ]
+}

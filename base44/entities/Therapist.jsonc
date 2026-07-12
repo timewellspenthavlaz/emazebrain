@@ -1,0 +1,58 @@
+{
+  "name": "Therapist",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "clinic_id": {
+      "type": "string",
+      "title": "Clinic ID"
+    },
+    "clinic_name": {
+      "type": "string",
+      "title": "Clinic Name"
+    },
+    "specialty": {
+      "type": "string",
+      "title": "Specialty"
+    },
+    "license_number": {
+      "type": "string",
+      "title": "License Number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending"
+      ],
+      "default": "pending",
+      "title": "Status"
+    },
+    "signup_method": {
+      "type": "string",
+      "enum": [
+        "admin_created",
+        "self_registered"
+      ],
+      "default": "admin_created",
+      "title": "Signup Method"
+    }
+  },
+  "required": [
+    "full_name",
+    "email"
+  ]
+}

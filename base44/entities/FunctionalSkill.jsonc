@@ -1,0 +1,54 @@
+{
+  "name": "FunctionalSkill",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Skill Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "category": {
+      "type": "string",
+      "title": "Category"
+    },
+    "brain_region_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Brain Region IDs"
+    },
+    "brain_region_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Brain Region Names"
+    },
+    "diagnosis_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Related Diagnosis IDs"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

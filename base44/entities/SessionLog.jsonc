@@ -1,0 +1,78 @@
+{
+  "name": "SessionLog",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "title": "Patient ID"
+    },
+    "patient_name": {
+      "type": "string",
+      "title": "Patient Name"
+    },
+    "therapist_id": {
+      "type": "string",
+      "title": "Therapist ID"
+    },
+    "therapist_name": {
+      "type": "string",
+      "title": "Therapist Name"
+    },
+    "clinic_id": {
+      "type": "string",
+      "title": "Clinic ID"
+    },
+    "clinic_name": {
+      "type": "string",
+      "title": "Clinic Name"
+    },
+    "content_item_id": {
+      "type": "string",
+      "title": "Content Item ID"
+    },
+    "content_title": {
+      "type": "string",
+      "title": "Content Title"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "game"
+      ],
+      "title": "Content Type"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 0,
+      "title": "Duration (minutes)"
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Session Date"
+    },
+    "location": {
+      "type": "string",
+      "enum": [
+        "in_clinic",
+        "at_home"
+      ],
+      "default": "in_clinic",
+      "title": "Location"
+    },
+    "progress_score": {
+      "type": "number",
+      "default": 0,
+      "title": "Progress Score (0-100)"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "patient_id",
+    "content_item_id"
+  ]
+}
