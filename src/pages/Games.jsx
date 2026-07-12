@@ -6,6 +6,7 @@ import StatusBadge from '@/components/admin/StatusBadge';
 import ContentFormDialog from '@/components/content/ContentFormDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +19,8 @@ export default function Games() {
   const [diagnoses, setDiagnoses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterRegion, setFilterRegion] = useState('all');
+  const [filterSkill, setFilterSkill] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -51,7 +54,12 @@ export default function Games() {
     loadData();
   };
 
-  const filtered = items.filter(item => !search || item.title?.toLowerCase().includes(search.toLowerCase()));
+  const filtered = items.filter(item => {
+    if (search && !item.title?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterRegion !== 'all' && !item.brain_region_ids?.includes(filterRegion)) return false;
+    if (filterSkill !== 'all' && !item.functional_skill_ids?.includes(filterSkill)) return false;
+    return true;
+  });
 
   const namesFor = (ids, source, field) => (ids || []).map(id => source.find(x => x.id === id)?.[field]).filter(Boolean);
 
@@ -93,9 +101,25 @@ export default function Games() {
         </Button>
       </PageHeader>
 
-      <div className="mb-4 relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search games..." className="pl-9 bg-card" />
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search games..." className="pl-9 bg-card" />
+        </div>
+        <Select value={filterRegion} onValueChange={setFilterRegion}>
+          <SelectTrigger className="w-[200px] bg-card"><SelectValue placeholder="Brain Region" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Brain Regions</SelectItem>
+            {brainRegions.filter(r => r.status === 'active').map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterSkill} onValueChange={setFilterSkill}>
+          <SelectTrigger className="w-[200px] bg-card"><SelectValue placeholder="Functional Skill" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Functional Skills</SelectItem>
+            {skills.filter(s => s.status === 'active').map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
