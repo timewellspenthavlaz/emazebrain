@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import TagSelector from '@/components/content/TagSelector';
+import BackgroundSelector from '@/components/content/BackgroundSelector';
 
 export default function ContentFormDialog({ open, onOpenChange, editing, contentType, therapists, brainRegions, skills, diagnoses, onSaved }) {
   const { toast } = useToast();
@@ -25,7 +26,8 @@ export default function ContentFormDialog({ open, onOpenChange, editing, content
     if (open) {
       setForm(editing ? { ...editing } : {
         title: '', description: '', type: contentType, link_type: 'external', url: '',
-        thumbnail_url: '', therapist_ids: [], brain_region_ids: [], functional_skill_ids: [],
+        thumbnail_url: '', background_id: '', background_url: '', background_name: '',
+        therapist_ids: [], brain_region_ids: [], functional_skill_ids: [],
         diagnosis_ids: [], level: 'beginner', duration_minutes: 5, usage_setting: 'both',
         status: 'active'
       });
@@ -141,6 +143,16 @@ export default function ContentFormDialog({ open, onOpenChange, editing, content
             <div className="col-span-2">
               <Label>Thumbnail URL (Video Snapshot)</Label>
               <Input value={form.thumbnail_url || ''} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} className="mt-1" placeholder="https://..." />
+            </div>
+          )}
+
+          {!isVideo && (
+            <div className="col-span-2">
+              <Label>Game Background</Label>
+              <BackgroundSelector
+                selectedId={form.background_id || ''}
+                onSelect={(bg) => setForm({ ...form, background_id: bg.id, background_url: bg.image_url, background_name: bg.name })}
+              />
             </div>
           )}
 

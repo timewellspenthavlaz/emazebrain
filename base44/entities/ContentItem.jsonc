@@ -35,6 +35,18 @@
       "type": "string",
       "title": "Thumbnail URL"
     },
+    "background_id": {
+      "type": "string",
+      "title": "Game Background ID"
+    },
+    "background_url": {
+      "type": "string",
+      "title": "Game Background URL"
+    },
+    "background_name": {
+      "type": "string",
+      "title": "Game Background Name"
+    },
     "therapist_ids": {
       "type": "array",
       "items": {
