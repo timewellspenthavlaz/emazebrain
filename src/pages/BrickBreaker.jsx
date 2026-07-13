@@ -1,0 +1,482 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import confetti from 'canvas-confetti';
+import { LEVELS } from '@/lib/brickBreakerLevels';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ChevronRight, RotateCcw, Trophy, Heart, Star } from 'lucide-react';
+
+const CANVAS_W = 800;
+const CANVAS_H = 600;
+const PADDLE_H = 14;
+const PADDLE_Y = 558;
+const BALL_R = 8;
+const BRICK_COLS = 10;
+const BRICK_W = 72;
+const BRICK_H = 22;
+const BRICK_GAP = 4;
+const BRICK_OFFSET_X = (CANVAS_W - (BRICK_COLS * (BRICK_W + BRICK_GAP) - BRICK_GAP)) / 2;
+const BRICK_OFFSET_Y = 50;
+
+const ROW_COLORS = [
+  ['#FF6B6B', '#E84545'],
+  ['#FFA94D', '#E8852D'],
+  ['#FFD93D', '#E8C22D'],
+  ['#6BCB77', '#4FB061'],
+  ['#4D96FF', '#3D7ACC'],
+  ['#9B72CB', '#7E55AE'],
+  ['#FF6B9D', '#E84D80'],
+  ['#6BCFFF', '#4FB8E8'],
+  ['#FFD93D', '#E8C22D'],
+  ['#6BCB77', '#4FB061'],
+];
+const TOUGH_COLORS = ['#B8C0CC', '#8A93A0'];
+const TOUGH_COLORS_DAMAGED = ['#D8A0A0', '#B06868'];
+
+function initBricks(levelConfig) {
+  const bricks = [];
+  const pattern = levelConfig.pattern;
+  for (let row = 0; row < pattern.length; row++) {
+    for (let col = 0; col < BRICK_COLS; col++) {
+      if (pattern[row][col] === 0) continue;
+      const isTough = pattern[row][col] === 2;
+      const colors = isTough ? [...TOUGH_COLORS] : ROW_COLORS[row % ROW_COLORS.length];
+      bricks.push({
+        x: BRICK_OFFSET_X + col * (BRICK_W + BRICK_GAP),
+        y: BRICK_OFFSET_Y + row * (BRICK_H + BRICK_GAP),
+        w: BRICK_W,
+        h: BRICK_H,
+        hp: isTough ? 2 : 1,
+        maxHp: isTough ? 2 : 1,
+        dead: false,
+        isTough,
+        colors,
+      });
+    }
+  }
+  return bricks;
+}
+
+function spawnParticles(x, y, color, particles) {
+  for (let i = 0; i < 8; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3;
+    particles.push({
+      x, y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed - 1,
+      life: 30 + Math.random() * 20,
+      maxLife: 50,
+      size: 3 + Math.random() * 3,
+      color,
+    });
+  }
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function render(ctx, bricks, paddle, ball, particles) {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+  for (const b of bricks) {
+    if (b.dead) continue;
+    const colors = b.hp < b.maxHp && b.isTough ? TOUGH_COLORS_DAMAGED : b.colors;
+    drawRoundedRect(ctx, b.x, b.y, b.w, b.h, 4);
+    const grad = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+    grad.addColorStop(0, colors[0]);
+    grad.addColorStop(1, colors[1]);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(b.x + 4, b.y + 1);
+    ctx.lineTo(b.x + b.w - 4, b.y + 1);
+    ctx.stroke();
+  }
+
+  const pg = ctx.createLinearGradient(0, PADDLE_Y, 0, PADDLE_Y + PADDLE_H);
+  pg.addColorStop(0, '#5B9FFF');
+  pg.addColorStop(0.5, '#4D96FF');
+  pg.addColorStop(1, '#3D7ACC');
+  drawRoundedRect(ctx, paddle.x, PADDLE_Y, paddle.w, PADDLE_H, PADDLE_H / 2);
+  ctx.fillStyle = pg;
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(paddle.x + paddle.w / 2, PADDLE_Y + PADDLE_H / 3, paddle.w / 3.5, PADDLE_H / 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const glow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, BALL_R * 2.5);
+  glow.addColorStop(0, 'rgba(255,255,255,0.35)');
+  glow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL_R * 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  const bg = ctx.createRadialGradient(ball.x - BALL_R / 3, ball.y - BALL_R / 3, 0, ball.x, ball.y, BALL_R);
+  bg.addColorStop(0, '#ffffff');
+  bg.addColorStop(1, '#C8C8D8');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+  ctx.fill();
+
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function fireConfetti() {
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B72CB'],
+  });
+}
+
+function fireBigConfetti() {
+  const colors = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B72CB'];
+  const end = Date.now() + 2000;
+  (function frame() {
+    confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors });
+    confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+  confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, colors });
+}
+
+export default function BrickBreakerGame({ initialLevel, backgroundUrl }) {
+  const canvasRef = useRef(null);
+  const phaseRef = useRef('serving');
+  const scoreRef = useRef(0);
+  const livesRef = useRef(3);
+
+  const [phase, setPhase] = useState('serving');
+  const [level, setLevel] = useState(Math.min(10, Math.max(1, initialLevel || 1)));
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [retryNonce, setRetryNonce] = useState(0);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const levelConfig = LEVELS[level - 1];
+    const speed = levelConfig.ballSpeed;
+    const paddleW = levelConfig.paddleWidth;
+
+    let paddle = { x: CANVAS_W / 2 - paddleW / 2, w: paddleW };
+    let ball = { x: CANVAS_W / 2, y: PADDLE_Y - BALL_R - 1, dx: 0, dy: 0 };
+    let bricks = initBricks(levelConfig);
+    let particles = [];
+    let animId;
+
+    phaseRef.current = 'serving';
+
+    const getCanvasX = (clientX) => {
+      const rect = canvas.getBoundingClientRect();
+      return (clientX - rect.left) * (CANVAS_W / rect.width);
+    };
+
+    const handleMove = (x) => {
+      paddle.x = Math.max(0, Math.min(CANVAS_W - paddle.w, x - paddle.w / 2));
+    };
+
+    const onMouseMove = (e) => handleMove(getCanvasX(e.clientX));
+    const onTouchMove = (e) => { e.preventDefault(); handleMove(getCanvasX(e.touches[0].clientX)); };
+
+    const onLaunch = () => {
+      if (phaseRef.current === 'serving') {
+        phaseRef.current = 'playing';
+        setPhase('playing');
+        const angle = (Math.random() - 0.5) * 0.6;
+        ball.dx = speed * Math.sin(angle);
+        ball.dy = -speed * Math.cos(angle);
+      }
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') handleMove(paddle.x + paddle.w / 2 - 30);
+      else if (e.key === 'ArrowRight') handleMove(paddle.x + paddle.w / 2 + 30);
+      else if (e.key === ' ') { e.preventDefault(); onLaunch(); }
+    };
+
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('click', onLaunch);
+    canvas.addEventListener('touchstart', onLaunch);
+    window.addEventListener('keydown', onKeyDown);
+
+    const update = () => {
+      if (phaseRef.current === 'serving') {
+        ball.x = paddle.x + paddle.w / 2;
+        ball.y = PADDLE_Y - BALL_R - 1;
+      }
+
+      if (phaseRef.current === 'playing') {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
+        if (ball.x + BALL_R >= CANVAS_W) { ball.x = CANVAS_W - BALL_R; ball.dx = -Math.abs(ball.dx); }
+        if (ball.y - BALL_R <= 0) { ball.y = BALL_R; ball.dy = Math.abs(ball.dy); }
+
+        if (ball.dy > 0 && ball.y + BALL_R >= PADDLE_Y && ball.y + BALL_R <= PADDLE_Y + PADDLE_H + 8 &&
+            ball.x >= paddle.x - BALL_R && ball.x <= paddle.x + paddle.w + BALL_R) {
+          ball.y = PADDLE_Y - BALL_R;
+          const hitPos = Math.max(0, Math.min(1, (ball.x - paddle.x) / paddle.w));
+          const angle = (hitPos - 0.5) * Math.PI * 0.7;
+          ball.dx = speed * Math.sin(angle);
+          ball.dy = -Math.abs(speed * Math.cos(angle));
+        }
+
+        for (let i = 0; i < bricks.length; i++) {
+          const b = bricks[i];
+          if (b.dead) continue;
+          if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
+              ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
+            const overlapL = ball.x + BALL_R - b.x;
+            const overlapR = b.x + b.w - (ball.x - BALL_R);
+            const overlapT = ball.y + BALL_R - b.y;
+            const overlapB = b.y + b.h - (ball.y - BALL_R);
+            const minOverlap = Math.min(overlapL, overlapR, overlapT, overlapB);
+            if (minOverlap === overlapL || minOverlap === overlapR) ball.dx = -ball.dx;
+            else ball.dy = -ball.dy;
+
+            b.hp--;
+            if (b.hp <= 0) {
+              b.dead = true;
+              scoreRef.current += 10;
+              spawnParticles(b.x + b.w / 2, b.y + b.h / 2, b.colors[0], particles);
+            } else {
+              scoreRef.current += 5;
+            }
+            setScore(scoreRef.current);
+            break;
+          }
+        }
+
+        if (ball.y - BALL_R > CANVAS_H) {
+          livesRef.current--;
+          setLives(livesRef.current);
+          if (livesRef.current <= 0) {
+            phaseRef.current = 'gameOver';
+            setPhase('gameOver');
+          } else {
+            phaseRef.current = 'serving';
+            setPhase('serving');
+            ball.dx = 0;
+            ball.dy = 0;
+          }
+        }
+
+        if (bricks.every(b => b.dead)) {
+          scoreRef.current += 50;
+          setScore(scoreRef.current);
+          if (level >= 10) {
+            phaseRef.current = 'allComplete';
+            setPhase('allComplete');
+            fireBigConfetti();
+          } else {
+            phaseRef.current = 'levelComplete';
+            setPhase('levelComplete');
+            fireConfetti();
+          }
+        }
+      }
+
+      particles = particles.filter(p => {
+        p.x += p.dx;
+        p.y += p.dy;
+        p.dy += 0.2;
+        p.life--;
+        return p.life > 0;
+      });
+
+      render(ctx, bricks, paddle, ball, particles);
+      animId = requestAnimationFrame(update);
+    };
+
+    update();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      canvas.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('click', onLaunch);
+      canvas.removeEventListener('touchstart', onLaunch);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [level, retryNonce]);
+
+  const nextLevel = () => {
+    setLevel(l => Math.min(10, l + 1));
+    setPhase('serving');
+    setShowLevelUp(true);
+    setTimeout(() => setShowLevelUp(false), 2000);
+  };
+
+  const retry = () => {
+    scoreRef.current = 0;
+    livesRef.current = 3;
+    setScore(0);
+    setLives(3);
+    setRetryNonce(n => n + 1);
+    setPhase('serving');
+  };
+
+  const replay = () => {
+    scoreRef.current = 0;
+    livesRef.current = 3;
+    setScore(0);
+    setLives(3);
+    setLevel(1);
+    setPhase('serving');
+  };
+
+  const levelConfig = LEVELS[level - 1];
+
+  return (
+    <div className="min-h-screen flex flex-col items-center bg-neutral-950 px-4 py-6">
+      {/* HUD */}
+      <div className="w-full max-w-[800px] flex items-center justify-between mb-4">
+        <Link to="/games">
+          <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-white hover:bg-neutral-800">
+            <ArrowLeft className="w-4 h-4 mr-1" /> Exit
+          </Button>
+        </Link>
+        <div className="flex items-center gap-6">
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-500">Level</p>
+            <p className="text-lg font-bold text-white">{level}/10</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-500">Score</p>
+            <p className="text-lg font-bold text-white flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400" />{score}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-500">Lives</p>
+            <div className="flex items-center gap-1 mt-0.5">
+              {[0, 1, 2].map(i => (
+                <Heart key={i} className={`w-5 h-5 ${i < lives ? 'text-red-500 fill-red-500' : 'text-neutral-700'}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Level name banner */}
+      <div className="w-full max-w-[800px] mb-3 text-center">
+        <h2 className="text-xl font-bold text-white">{levelConfig.name}</h2>
+        <p className="text-sm text-neutral-500">{levelConfig.description}</p>
+      </div>
+
+      {/* Game canvas */}
+      <div
+        className="relative w-full max-w-[800px] rounded-xl overflow-hidden border border-neutral-800 shadow-2xl"
+        style={{
+          backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40" />
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_W}
+          height={CANVAS_H}
+          className="relative w-full h-auto block cursor-pointer"
+        />
+
+        {/* Click to launch */}
+        {phase === 'serving' && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/60 backdrop-blur-sm rounded-full px-6 py-3 animate-pulse">
+              <p className="text-white font-medium text-sm">Click or tap to launch</p>
+            </div>
+          </div>
+        )}
+
+        {/* Level up flash */}
+        {showLevelUp && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="animate-[fade-in_0.3s_ease-out]">
+              <p className="text-5xl font-black text-white drop-shadow-[0_0_20px_rgba(91,159,255,0.8)]">LEVEL UP!</p>
+            </div>
+          </div>
+        )}
+
+        {/* Level complete modal */}
+        {phase === 'levelComplete' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-neutral-900 rounded-2xl p-8 text-center max-w-sm mx-4 border border-neutral-700">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-1">Level Complete!</h3>
+              <p className="text-neutral-400 mb-1">{levelConfig.name} cleared</p>
+              <p className="text-lg text-yellow-400 font-semibold mb-6">Score: {score}</p>
+              <Button onClick={nextLevel} className="w-full bg-primary hover:bg-primary/90">
+                Next Level <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Game over modal */}
+        {phase === 'gameOver' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-neutral-900 rounded-2xl p-8 text-center max-w-sm mx-4 border border-neutral-700">
+              <h3 className="text-2xl font-bold text-white mb-1">Game Over</h3>
+              <p className="text-neutral-400 mb-1">You reached Level {level}</p>
+              <p className="text-lg text-yellow-400 font-semibold mb-6">Final Score: {score}</p>
+              <Button onClick={retry} className="w-full bg-primary hover:bg-primary/90">
+                <RotateCcw className="w-4 h-4 mr-1" /> Retry Level {level}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* All complete modal */}
+        {phase === 'allComplete' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-neutral-900 rounded-2xl p-8 text-center max-w-sm mx-4 border border-yellow-600/50">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(250,204,21,0.4)]">
+                <Trophy className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-3xl font-black text-white mb-1">CHAMPION!</h3>
+              <p className="text-neutral-400 mb-4">All 10 levels conquered</p>
+              <p className="text-2xl text-yellow-400 font-bold mb-6">Final Score: {score}</p>
+              <Button onClick={replay} className="w-full bg-primary hover:bg-primary/90">
+                <RotateCcw className="w-4 h-4 mr-1" /> Play Again
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-neutral-600 mt-4">Move mouse or use arrow keys · Click/Space to launch</p>
+    </div>
+  );
+}

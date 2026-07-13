@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Plus, Pencil, Power, ExternalLink, Gamepad2, Search, Eye } from 'lucide-react';
+import { Plus, Pencil, Power, ExternalLink, Gamepad2, Search, Eye, Play } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
 import StatusBadge from '@/components/admin/StatusBadge';
 import ContentFormDialog from '@/components/content/ContentFormDialog';
@@ -189,6 +189,11 @@ export default function Games() {
                     <td className="px-4 py-3">{renderTags(item)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
+                        {item.title?.toLowerCase().includes('brick breaker') && item.background_url && (
+                          <a href={`/brick-breaker?level=1&bg=${encodeURIComponent(item.background_url)}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title="Play Game"><Play className="w-4 h-4" /></Button>
+                          </a>
+                        )}
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Quick Preview"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleStatus(item)}>

@@ -17,6 +17,7 @@ import Games from '@/pages/Games';
 import Taxonomy from '@/pages/Taxonomy';
 import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
+import BrickBreaker from '@/pages/BrickBreaker';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
+      <Route path="/brick-breaker" element={<BrickBreaker />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
