@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { ArrowLeft, User, Calendar, Stethoscope, Building2, Brain, Activity, FileText, TrendingUp } from 'lucide-react';
 import StatusBadge from '@/components/admin/StatusBadge';
 import TherapyLogSection from '@/components/therapy/TherapyLogSection';
+import { calcAgeGroup } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import moment from 'moment';
@@ -85,7 +86,7 @@ export default function PatientDetail() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Age Group</p>
-                <p className="font-semibold">{patient.age_group || '—'}</p>
+                <p className="font-semibold">{calcAgeGroup(patient.date_of_birth) || patient.age_group || '—'}</p>
               </div>
             </div>
           </CardContent>

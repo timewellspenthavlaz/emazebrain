@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import TableToolbar from '@/components/admin/TableToolbar';
+import { calcAgeGroup } from '@/lib/utils';
 
 export default function Patients() {
   const navigate = useNavigate();
@@ -257,7 +258,7 @@ export default function Patients() {
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <Input type="date" value={form.date_of_birth || ''} onChange={e => setForm({...form, date_of_birth: e.target.value})} className="mt-1" />
+              <Input type="date" value={form.date_of_birth || ''} onChange={e => setForm({...form, date_of_birth: e.target.value, age_group: calcAgeGroup(e.target.value)})} className="mt-1" />
             </div>
             <div>
               <Label>Gender</Label>
@@ -272,16 +273,9 @@ export default function Patients() {
             </div>
             <div>
               <Label>Age Group</Label>
-              <Select value={form.age_group || '3-5'} onValueChange={v => setForm({...form, age_group: v})}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3-5">3-5 years</SelectItem>
-                  <SelectItem value="6-8">6-8 years</SelectItem>
-                  <SelectItem value="9-11">9-11 years</SelectItem>
-                  <SelectItem value="12-14">12-14 years</SelectItem>
-                  <SelectItem value="15-18">15-18 years</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center h-9 px-3 mt-1 rounded-md border border-input bg-muted/30 text-sm text-muted-foreground">
+                {form.date_of_birth ? `${form.age_group || calcAgeGroup(form.date_of_birth)} years` : 'Auto-calculated from DOB'}
+              </div>
             </div>
             <div>
               <Label>Level</Label>
