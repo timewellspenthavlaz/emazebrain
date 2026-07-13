@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, ChevronDown, Loader2 } from 'lucide-react';
 
 const CATEGORY_LABELS = {
   solid_warm: 'Solid Warm',
@@ -12,9 +12,10 @@ const CATEGORY_LABELS = {
 
 const CATEGORY_ORDER = ['solid_warm', 'solid_cold', 'textured_warm', 'textured_cold'];
 
-export default function BackgroundSelector({ selectedId, onSelect }) {
+export default function BackgroundSelector({ selectedId, selectedUrl, onSelect }) {
   const [backgrounds, setBackgrounds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -29,6 +30,30 @@ export default function BackgroundSelector({ selectedId, onSelect }) {
     };
     load();
   }, []);
+
+  const selectedBg = backgrounds.find(b => b.id === selectedId);
+
+  const collapsedPreview = (
+    <div
+      className="w-full rounded-lg border border-border overflow-hidden cursor-pointer transition-all hover:border-primary/40"
+      style={{ backgroundColor: '#000' }}
+      onClick={() => setExpanded(true)}
+    >
+      <div className="aspect-video w-full relative flex items-center justify-center">
+        {selectedUrl ? (
+          <img src={selectedUrl} alt={selectedBg?.name || 'Background'} className="w-full h-full object-cover" />
+        ) : (
+          <p className="text-sm text-neutral-500">No background selected</p>
+        )}
+        <div className="absolute inset-0 bg-black/20 flex items-end justify-between p-3">
+          <span className="text-xs font-medium text-white drop-shadow">
+            {selectedBg ? selectedBg.name : 'Click to expand'}
+          </span>
+          <ChevronDown className={cn("w-4 h-4 text-white transition-transform", expanded && "rotate-180")} />
+        </div>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -50,8 +75,13 @@ export default function BackgroundSelector({ selectedId, onSelect }) {
     items: backgrounds.filter(b => b.category === cat),
   })).filter(g => g.items.length > 0);
 
+  if (!expanded) {
+    return collapsedPreview;
+  }
+
   return (
     <div className="space-y-4 mt-1">
+      {collapsedPreview}
       {grouped.map(group => (
         <div key={group.category}>
           <p className="text-xs font-medium text-muted-foreground mb-2">{group.label}</p>
@@ -60,7 +90,7 @@ export default function BackgroundSelector({ selectedId, onSelect }) {
               <button
                 key={bg.id}
                 type="button"
-                onClick={() => onSelect(bg)}
+                onClick={() => { onSelect(bg); setExpanded(false); }}
                 className={cn(
                   "relative rounded-lg overflow-hidden border-2 transition-all group",
                   selectedId === bg.id

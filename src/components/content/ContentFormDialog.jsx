@@ -151,6 +151,7 @@ export default function ContentFormDialog({ open, onOpenChange, editing, content
               <Label>Game Background</Label>
               <BackgroundSelector
                 selectedId={form.background_id || ''}
+                selectedUrl={form.background_url || ''}
                 onSelect={(bg) => setForm({ ...form, background_id: bg.id, background_url: bg.image_url, background_name: bg.name })}
               />
             </div>
