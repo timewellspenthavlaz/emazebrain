@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { LEVELS } from '@/lib/brickBreakerLevels';
 import { Button } from '@/components/ui/button';
@@ -162,14 +162,18 @@ function fireBigConfetti() {
   confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, colors });
 }
 
-export default function BrickBreakerGame({ initialLevel, backgroundUrl }) {
+export default function BrickBreakerGame() {
+  const [searchParams] = useSearchParams();
+  const initialLevel = parseInt(searchParams.get('level'), 10) || 1;
+  const backgroundUrl = searchParams.get('bg') || '';
+
   const canvasRef = useRef(null);
   const phaseRef = useRef('serving');
   const scoreRef = useRef(0);
   const livesRef = useRef(3);
 
   const [phase, setPhase] = useState('serving');
-  const [level, setLevel] = useState(Math.min(10, Math.max(1, initialLevel || 1)));
+  const [level, setLevel] = useState(Math.min(10, Math.max(1, initialLevel)));
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [retryNonce, setRetryNonce] = useState(0);
