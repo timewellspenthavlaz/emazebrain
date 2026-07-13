@@ -47,7 +47,7 @@ const navGroups = [
   }
 ];
 
-export default function Sidebar({ collapsed, setCollapsed }) {
+export default function Sidebar({ collapsed, setCollapsed, onNavigate }) {
   const location = useLocation();
 
   return (
@@ -91,6 +91,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={onNavigate}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group relative",
                       isActive
