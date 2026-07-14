@@ -362,22 +362,22 @@ export default function BrickBreakerGame() {
   const levelConfig = LEVELS[level - 1];
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-neutral-950 px-2 py-4">
+    <div className="h-screen overflow-hidden flex flex-col items-center bg-neutral-950 px-2 py-2">
       {/* HUD */}
-      <div className="w-full flex items-center justify-between mb-4">
+      <div className="w-full flex items-center justify-between mb-2 shrink-0">
         <Link to="/games">
           <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-white hover:bg-neutral-800">
             <ArrowLeft className="w-4 h-4 mr-1" /> Exit
           </Button>
         </Link>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <div className="text-center">
             <p className="text-[10px] uppercase tracking-wider text-neutral-500">Level</p>
-            <p className="text-lg font-bold text-white">{level}/10</p>
+            <p className="text-base font-bold text-white">{level}/10</p>
           </div>
           <div className="text-center">
             <p className="text-[10px] uppercase tracking-wider text-neutral-500">Score</p>
-            <p className="text-lg font-bold text-white flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400" />{score}</p>
+            <p className="text-base font-bold text-white flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400" />{score}</p>
           </div>
           <div className="text-center">
             <p className="text-[10px] uppercase tracking-wider text-neutral-500">Lives</p>
@@ -391,14 +391,17 @@ export default function BrickBreakerGame() {
       </div>
 
       {/* Level name banner */}
-      <div className="w-full mb-3 text-center">
-        <h2 className="text-xl font-bold text-white">{levelConfig.name}</h2>
-        <p className="text-sm text-neutral-500">{levelConfig.description}</p>
+      <div className="w-full mb-2 text-center shrink-0">
+        <h2 className="text-lg font-bold text-white">{levelConfig.name}</h2>
+        <p className="text-xs text-neutral-500">{levelConfig.description}</p>
       </div>
 
       {/* Game canvas */}
       <div
-        className="relative w-full rounded-xl overflow-hidden border border-neutral-800 shadow-2xl"
+        className="relative flex-1 w-full min-h-0 flex items-center justify-center"
+      >
+      <div
+        className="relative h-full aspect-[4/3] max-w-full max-h-full rounded-xl overflow-hidden border border-neutral-800 shadow-2xl"
         style={{
           backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           backgroundSize: 'cover',
@@ -410,7 +413,7 @@ export default function BrickBreakerGame() {
           ref={canvasRef}
           width={CANVAS_W}
           height={CANVAS_H}
-          className="relative w-full h-auto block cursor-pointer"
+          className="relative w-full h-full block cursor-pointer"
         />
 
         {/* Click to launch */}
@@ -479,8 +482,9 @@ export default function BrickBreakerGame() {
           </div>
         )}
       </div>
+      </div>
 
-      <p className="text-xs text-neutral-600 mt-4">Move mouse or use arrow keys · Click/Space to launch</p>
+      <p className="text-xs text-neutral-600 mt-1 shrink-0">Move mouse or use arrow keys · Click/Space to launch</p>
     </div>
   );
 }
