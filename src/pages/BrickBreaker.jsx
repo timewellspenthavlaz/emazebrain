@@ -210,7 +210,11 @@ export default function BrickBreakerGame() {
       paddle.x = Math.max(0, Math.min(CANVAS_W - paddle.w, x - paddle.w / 2));
     };
 
-    const onMouseMove = (e) => handleMove(getCanvasX(e.clientX));
+    const onMouseMove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      if (e.clientX < rect.left || e.clientX > rect.right) return;
+      handleMove(getCanvasX(e.clientX));
+    };
     const onTouchMove = (e) => { e.preventDefault(); handleMove(getCanvasX(e.touches[0].clientX)); };
 
     const onLaunch = () => {
@@ -229,7 +233,7 @@ export default function BrickBreakerGame() {
       else if (e.key === ' ') { e.preventDefault(); onLaunch(); }
     };
 
-    canvas.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     canvas.addEventListener('click', onLaunch);
     canvas.addEventListener('touchstart', onLaunch);
@@ -329,7 +333,7 @@ export default function BrickBreakerGame() {
 
     return () => {
       cancelAnimationFrame(animId);
-      canvas.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('click', onLaunch);
       canvas.removeEventListener('touchstart', onLaunch);
