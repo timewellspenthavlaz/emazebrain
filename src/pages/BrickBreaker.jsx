@@ -362,9 +362,9 @@ export default function BrickBreakerGame() {
   const levelConfig = LEVELS[level - 1];
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-neutral-950 px-4 py-6">
+    <div className="min-h-screen flex flex-col items-center bg-neutral-950 px-2 py-4">
       {/* HUD */}
-      <div className="w-full max-w-[800px] flex items-center justify-between mb-4">
+      <div className="w-full flex items-center justify-between mb-4">
         <Link to="/games">
           <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-white hover:bg-neutral-800">
             <ArrowLeft className="w-4 h-4 mr-1" /> Exit
@@ -391,14 +391,14 @@ export default function BrickBreakerGame() {
       </div>
 
       {/* Level name banner */}
-      <div className="w-full max-w-[800px] mb-3 text-center">
+      <div className="w-full mb-3 text-center">
         <h2 className="text-xl font-bold text-white">{levelConfig.name}</h2>
         <p className="text-sm text-neutral-500">{levelConfig.description}</p>
       </div>
 
       {/* Game canvas */}
       <div
-        className="relative w-full max-w-[800px] rounded-xl overflow-hidden border border-neutral-800 shadow-2xl"
+        className="relative w-full rounded-xl overflow-hidden border border-neutral-800 shadow-2xl"
         style={{
           backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           backgroundSize: 'cover',
