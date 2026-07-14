@@ -10,6 +10,9 @@ const CANVAS_H = 600;
 const PADDLE_H = 14;
 const PADDLE_Y = 558;
 const BALL_R = 8;
+const BASE_SPEED = 3.5;
+// Level 1 = base speed; each level adds ~5% of base; Level 10 = 50% faster than Level 1.
+const getLevelSpeed = (lvl) => BASE_SPEED * (1 + (lvl - 1) * (0.5 / 9));
 const BRICK_COLS = 10;
 const BRICK_W = 72;
 const BRICK_H = 22;
@@ -187,7 +190,7 @@ export default function BrickBreakerGame() {
     const ctx = canvas.getContext('2d');
 
     const levelConfig = LEVELS[level - 1];
-    const speed = levelConfig.ballSpeed;
+    const speed = getLevelSpeed(level);
     const paddleW = levelConfig.paddleWidth;
 
     let paddle = { x: CANVAS_W / 2 - paddleW / 2, w: paddleW };
