@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { LEVELS } from '@/lib/brickBreakerLevels';
+import { LEVELS } from '@/lib/blockCrasherLevels';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronRight, RotateCcw, Trophy, Heart, Star } from 'lucide-react';
 
@@ -165,7 +165,7 @@ function fireBigConfetti() {
   confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, colors });
 }
 
-export default function BrickBreakerGame() {
+export default function BlockCrasherGame() {
   const [searchParams] = useSearchParams();
   const initialLevel = parseInt(searchParams.get('level'), 10) || 1;
   const backgroundUrl = searchParams.get('bg') || '';

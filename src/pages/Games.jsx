@@ -189,8 +189,8 @@ export default function Games() {
                     <td className="px-4 py-3">{renderTags(item)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        {item.title?.toLowerCase().includes('brick breaker') && item.background_url && (
-                          <a href={`/brick-breaker?level=1&bg=${encodeURIComponent(item.background_url)}`}>
+                        {item.title?.toLowerCase().includes('block crasher') && item.background_url && (
+                          <a href={`/block-crasher?level=1&bg=${encodeURIComponent(item.background_url)}`}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
