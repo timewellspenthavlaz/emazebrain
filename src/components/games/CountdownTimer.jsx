@@ -33,7 +33,7 @@ export default function CountdownTimer({ type, timeLeft, totalTime }) {
 
   if (type === 'left') {
     return (
-      <div className="absolute top-3 left-3 z-20">
+      <div className="absolute top-5 right-5 z-20">
         <div
           className="text-4xl font-black tabular-nums leading-none"
           style={{
