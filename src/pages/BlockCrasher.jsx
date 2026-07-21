@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { LEVELS } from '@/lib/blockCrasherLevels';
+import CountdownTimer from '@/components/games/CountdownTimer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronRight, RotateCcw, Trophy, Heart, Star } from 'lucide-react';
 
@@ -167,7 +168,11 @@ function fireBigConfetti() {
 
 export default function BlockCrasherGame() {
   const [searchParams] = useSearchParams();
-  const initialLevel = parseInt(searchParams.get('level'), 10) || 1;
+  const timeToPlay = parseInt(searchParams.get('time_to_play'), 10) || 0;
+  const difficultyLevel = Math.min(5, Math.max(1, parseInt(searchParams.get('difficulty_level'), 10) || 1));
+  const countdownTimerType = searchParams.get('countdown_timer') || 'none';
+  const calculatedStartLevel = difficultyLevel === 1 ? 1 : Math.min(10, difficultyLevel * 2);
+  const initialLevel = parseInt(searchParams.get('level'), 10) || calculatedStartLevel;
   const backgroundUrl = searchParams.get('bg') || '';
 
   const canvasRef = useRef(null);
@@ -181,8 +186,25 @@ export default function BlockCrasherGame() {
   const [lives, setLives] = useState(3);
   const [retryNonce, setRetryNonce] = useState(0);
   const [showLevelUp, setShowLevelUp] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(timeToPlay);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  useEffect(() => {
+    if (timeToPlay <= 0) return;
+    if (phase !== 'serving' && phase !== 'playing') return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          phaseRef.current = 'gameOver';
+          setPhase('gameOver');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [phase, timeToPlay]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -353,6 +375,7 @@ export default function BlockCrasherGame() {
     livesRef.current = 3;
     setScore(0);
     setLives(3);
+    setTimeLeft(timeToPlay);
     setRetryNonce(n => n + 1);
     setPhase('serving');
   };
@@ -362,6 +385,7 @@ export default function BlockCrasherGame() {
     livesRef.current = 3;
     setScore(0);
     setLives(3);
+    setTimeLeft(timeToPlay);
     setLevel(1);
     setPhase('serving');
   };
@@ -416,6 +440,7 @@ export default function BlockCrasherGame() {
         }}
       >
         <div className="absolute inset-0 bg-black/40" />
+        <CountdownTimer type={countdownTimerType} timeLeft={timeLeft} totalTime={timeToPlay} />
         <canvas
           ref={canvasRef}
           width={CANVAS_W}
