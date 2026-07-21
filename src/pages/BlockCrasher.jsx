@@ -187,11 +187,16 @@ export default function BlockCrasherGame() {
   const [retryNonce, setRetryNonce] = useState(0);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeToPlay);
+  const [timerStarted, setTimerStarted] = useState(false);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
   useEffect(() => {
-    if (timeToPlay <= 0) return;
+    if (phase === 'playing' && !timerStarted) setTimerStarted(true);
+  }, [phase, timerStarted]);
+
+  useEffect(() => {
+    if (timeToPlay <= 0 || !timerStarted) return;
     if (phase !== 'serving' && phase !== 'playing') return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -376,6 +381,7 @@ export default function BlockCrasherGame() {
     setScore(0);
     setLives(3);
     setTimeLeft(timeToPlay);
+    setTimerStarted(false);
     setRetryNonce(n => n + 1);
     setPhase('serving');
   };
@@ -386,6 +392,7 @@ export default function BlockCrasherGame() {
     setScore(0);
     setLives(3);
     setTimeLeft(timeToPlay);
+    setTimerStarted(false);
     setLevel(1);
     setPhase('serving');
   };
