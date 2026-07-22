@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { LEVELS } from '@/lib/blockCrasherLevels';
+import { assignSpecialBricks, getSpecialConfig } from '@/lib/specialBricks';
 import CountdownTimer from '@/components/games/CountdownTimer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronRight, RotateCcw, Trophy, Heart, Star } from 'lucide-react';
@@ -36,7 +37,7 @@ const ROW_COLORS = [
 const TOUGH_COLORS = ['#B8C0CC', '#8A93A0'];
 const TOUGH_COLORS_DAMAGED = ['#D8A0A0', '#B06868'];
 
-function initBricks(levelConfig) {
+function initBricks(levelConfig, level) {
   const bricks = [];
   const pattern = levelConfig.pattern;
   for (let row = 0; row < pattern.length; row++) {
@@ -54,10 +55,12 @@ function initBricks(levelConfig) {
         dead: false,
         isTough,
         colors,
+        special: null,
+        visible: true,
       });
     }
   }
-  return bricks;
+  return assignSpecialBricks(bricks, level);
 }
 
 function spawnParticles(x, y, color, particles) {
@@ -90,11 +93,12 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function render(ctx, bricks, paddle, ball, particles) {
+function render(ctx, bricks, paddle, balls, particles) {
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
   for (const b of bricks) {
     if (b.dead) continue;
+    if (b.special === 'invisible' && !b.visible) continue;
     const colors = b.hp < b.maxHp && b.isTough ? TOUGH_COLORS_DAMAGED : b.colors;
     drawRoundedRect(ctx, b.x, b.y, b.w, b.h, 4);
     const grad = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
@@ -108,6 +112,21 @@ function render(ctx, bricks, paddle, ball, particles) {
     ctx.moveTo(b.x + 4, b.y + 1);
     ctx.lineTo(b.x + b.w - 4, b.y + 1);
     ctx.stroke();
+
+    if (b.special) {
+      const cfg = getSpecialConfig(b.special);
+      if (cfg) {
+        ctx.strokeStyle = cfg.color;
+        ctx.lineWidth = 2;
+        drawRoundedRect(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, 3);
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(cfg.symbol, b.x + b.w / 2, b.y + b.h / 2);
+      }
+    }
   }
 
   const pg = ctx.createLinearGradient(0, PADDLE_Y, 0, PADDLE_Y + PADDLE_H);
@@ -122,21 +141,23 @@ function render(ctx, bricks, paddle, ball, particles) {
   ctx.ellipse(paddle.x + paddle.w / 2, PADDLE_Y + PADDLE_H / 3, paddle.w / 3.5, PADDLE_H / 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  const glow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, BALL_R * 2.5);
-  glow.addColorStop(0, 'rgba(255,255,255,0.35)');
-  glow.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, BALL_R * 2.5, 0, Math.PI * 2);
-  ctx.fill();
+  for (const ball of balls) {
+    const glow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, BALL_R * 2.5);
+    glow.addColorStop(0, 'rgba(255,255,255,0.35)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, BALL_R * 2.5, 0, Math.PI * 2);
+    ctx.fill();
 
-  const bg = ctx.createRadialGradient(ball.x - BALL_R / 3, ball.y - BALL_R / 3, 0, ball.x, ball.y, BALL_R);
-  bg.addColorStop(0, '#ffffff');
-  bg.addColorStop(1, '#C8C8D8');
-  ctx.fillStyle = bg;
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
-  ctx.fill();
+    const bg = ctx.createRadialGradient(ball.x - BALL_R / 3, ball.y - BALL_R / 3, 0, ball.x, ball.y, BALL_R);
+    bg.addColorStop(0, '#ffffff');
+    bg.addColorStop(1, '#C8C8D8');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
@@ -218,13 +239,18 @@ export default function BlockCrasherGame() {
 
     const levelConfig = LEVELS[level - 1];
     const speed = getLevelSpeed(level);
-    const paddleW = levelConfig.paddleWidth;
+    const basePaddleW = levelConfig.paddleWidth;
 
-    let paddle = { x: CANVAS_W / 2 - paddleW / 2, w: paddleW };
-    let ball = { x: CANVAS_W / 2, y: PADDLE_Y - BALL_R - 1, dx: 0, dy: 0 };
-    let bricks = initBricks(levelConfig);
+    let paddle = { x: CANVAS_W / 2 - basePaddleW / 2, w: basePaddleW };
+    let balls = [{ x: CANVAS_W / 2, y: PADDLE_Y - BALL_R - 1, dx: 0, dy: 0 }];
+    let bricks = initBricks(levelConfig, level);
     let particles = [];
     let animId;
+    let speedMult = 1;
+    let speedMultUntil = 0;
+    let paddleMult = 1;
+    let paddleMultUntil = 0;
+    let gravityUntil = 0;
 
     phaseRef.current = 'serving';
 
@@ -248,9 +274,10 @@ export default function BlockCrasherGame() {
       if (phaseRef.current === 'serving') {
         phaseRef.current = 'playing';
         setPhase('playing');
+        const sp = speed * speedMult;
         const angle = (Math.random() - 0.5) * 0.6;
-        ball.dx = speed * Math.sin(angle);
-        ball.dy = -speed * Math.cos(angle);
+        balls[0].dx = sp * Math.sin(angle);
+        balls[0].dy = -sp * Math.cos(angle);
       }
     };
 
@@ -267,55 +294,163 @@ export default function BlockCrasherGame() {
     window.addEventListener('keydown', onKeyDown);
 
     const update = () => {
+      const now = Date.now();
+      if (speedMultUntil && now >= speedMultUntil) {
+        speedMult = 1;
+        speedMultUntil = 0;
+        const sp = speed;
+        for (const sb of balls) {
+          const cs = Math.sqrt(sb.dx * sb.dx + sb.dy * sb.dy);
+          if (cs > 0) { sb.dx = (sb.dx / cs) * sp; sb.dy = (sb.dy / cs) * sp; }
+        }
+      }
+      if (paddleMultUntil && now >= paddleMultUntil) { paddleMult = 1; paddleMultUntil = 0; }
+      if (gravityUntil && now >= gravityUntil) { gravityUntil = 0; }
+
+      paddle.w = basePaddleW * paddleMult;
+      if (paddle.x + paddle.w > CANVAS_W) paddle.x = CANVAS_W - paddle.w;
+
       if (phaseRef.current === 'serving') {
-        ball.x = paddle.x + paddle.w / 2;
-        ball.y = PADDLE_Y - BALL_R - 1;
+        if (balls.length > 0) {
+          balls[0].x = paddle.x + paddle.w / 2;
+          balls[0].y = PADDLE_Y - BALL_R - 1;
+        }
       }
 
       if (phaseRef.current === 'playing') {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
+        const sp = speed * speedMult;
+        const gravityActive = gravityUntil > 0;
 
-        if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
-        if (ball.x + BALL_R >= CANVAS_W) { ball.x = CANVAS_W - BALL_R; ball.dx = -Math.abs(ball.dx); }
-        if (ball.y - BALL_R <= 0) { ball.y = BALL_R; ball.dy = Math.abs(ball.dy); }
+        for (let bi = balls.length - 1; bi >= 0; bi--) {
+          const ball = balls[bi];
 
-        if (ball.dy > 0 && ball.y + BALL_R >= PADDLE_Y && ball.y + BALL_R <= PADDLE_Y + PADDLE_H + 8 &&
-            ball.x >= paddle.x - BALL_R && ball.x <= paddle.x + paddle.w + BALL_R) {
-          ball.y = PADDLE_Y - BALL_R;
-          const hitPos = Math.max(0, Math.min(1, (ball.x - paddle.x) / paddle.w));
-          const angle = (hitPos - 0.5) * Math.PI * 0.7;
-          ball.dx = speed * Math.sin(angle);
-          ball.dy = -Math.abs(speed * Math.cos(angle));
-        }
+          if (gravityActive && ball.dy > 0) ball.dy += 0.02;
 
-        for (let i = 0; i < bricks.length; i++) {
-          const b = bricks[i];
-          if (b.dead) continue;
-          if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
-              ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
-            const overlapL = ball.x + BALL_R - b.x;
-            const overlapR = b.x + b.w - (ball.x - BALL_R);
-            const overlapT = ball.y + BALL_R - b.y;
-            const overlapB = b.y + b.h - (ball.y - BALL_R);
-            const minOverlap = Math.min(overlapL, overlapR, overlapT, overlapB);
-            if (minOverlap === overlapL || minOverlap === overlapR) ball.dx = -ball.dx;
-            else ball.dy = -ball.dy;
+          ball.x += ball.dx;
+          ball.y += ball.dy;
 
-            b.hp--;
-            if (b.hp <= 0) {
-              b.dead = true;
-              scoreRef.current += 10;
-              spawnParticles(b.x + b.w / 2, b.y + b.h / 2, b.colors[0], particles);
-            } else {
-              scoreRef.current += 5;
+          if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
+          if (ball.x + BALL_R >= CANVAS_W) { ball.x = CANVAS_W - BALL_R; ball.dx = -Math.abs(ball.dx); }
+          if (ball.y - BALL_R <= 0) { ball.y = BALL_R; ball.dy = Math.abs(ball.dy); }
+
+          if (ball.dy > 0 && ball.y + BALL_R >= PADDLE_Y && ball.y + BALL_R <= PADDLE_Y + PADDLE_H + 8 &&
+              ball.x >= paddle.x - BALL_R && ball.x <= paddle.x + paddle.w + BALL_R) {
+            ball.y = PADDLE_Y - BALL_R;
+            const hitPos = Math.max(0, Math.min(1, (ball.x - paddle.x) / paddle.w));
+            const angle = (hitPos - 0.5) * Math.PI * 0.7;
+            ball.dx = sp * Math.sin(angle);
+            ball.dy = -Math.abs(sp * Math.cos(angle));
+          }
+
+          for (let i = 0; i < bricks.length; i++) {
+            const b = bricks[i];
+            if (b.dead) continue;
+            if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
+                ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
+              const overlapL = ball.x + BALL_R - b.x;
+              const overlapR = b.x + b.w - (ball.x - BALL_R);
+              const overlapT = ball.y + BALL_R - b.y;
+              const overlapB = b.y + b.h - (ball.y - BALL_R);
+              const minOverlap = Math.min(overlapL, overlapR, overlapT, overlapB);
+              if (minOverlap === overlapL || minOverlap === overlapR) ball.dx = -ball.dx;
+              else ball.dy = -ball.dy;
+
+              if (b.special === 'invisible' && !b.visible) {
+                b.visible = true;
+                scoreRef.current += 5;
+                setScore(scoreRef.current);
+                break;
+              }
+
+              b.hp--;
+              if (b.hp <= 0) {
+                b.dead = true;
+                scoreRef.current += 10;
+                spawnParticles(b.x + b.w / 2, b.y + b.h / 2, b.colors[0], particles);
+
+                if (b.special) {
+                  switch (b.special) {
+                    case 'exploding': {
+                      const radius = (BRICK_W + BRICK_GAP) * 1.5;
+                      const cx = b.x + b.w / 2;
+                      const cy = b.y + b.h / 2;
+                      for (const other of bricks) {
+                        if (other.dead || other === b) continue;
+                        const ox = other.x + other.w / 2;
+                        const oy = other.y + other.h / 2;
+                        const dist = Math.sqrt((cx - ox) ** 2 + (cy - oy) ** 2);
+                        if (dist <= radius) {
+                          other.hp = 0;
+                          other.dead = true;
+                          scoreRef.current += 10;
+                          spawnParticles(ox, oy, other.colors[0], particles);
+                        }
+                      }
+                      break;
+                    }
+                    case 'slow_down': {
+                      speedMult = 0.6;
+                      speedMultUntil = Date.now() + 10000;
+                      const newSp = speed * speedMult;
+                      for (const sb of balls) {
+                        const cs = Math.sqrt(sb.dx * sb.dx + sb.dy * sb.dy);
+                        if (cs > 0) { sb.dx = (sb.dx / cs) * newSp; sb.dy = (sb.dy / cs) * newSp; }
+                      }
+                      break;
+                    }
+                    case 'rocket': {
+                      const colCenter = b.x + b.w / 2;
+                      for (const other of bricks) {
+                        if (other.dead || other === b) continue;
+                        if (Math.abs((other.x + other.w / 2) - colCenter) < BRICK_W / 2 + BRICK_GAP) {
+                          other.hp = 0;
+                          other.dead = true;
+                          scoreRef.current += 10;
+                          spawnParticles(other.x + other.w / 2, other.y + other.h / 2, other.colors[0], particles);
+                        }
+                      }
+                      break;
+                    }
+                    case 'paddle_thin':
+                      paddleMult = 0.7;
+                      paddleMultUntil = Date.now() + 10000;
+                      break;
+                    case 'paddle_wide':
+                      paddleMult = 1.5;
+                      paddleMultUntil = Date.now() + 10000;
+                      break;
+                    case 'multi_ball': {
+                      if (balls.length < 10) {
+                        for (let j = 0; j < 2; j++) {
+                          const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.7;
+                          balls.push({
+                            x: ball.x, y: ball.y,
+                            dx: sp * Math.cos(angle),
+                            dy: sp * Math.sin(angle),
+                          });
+                        }
+                      }
+                      break;
+                    }
+                    case 'gravity':
+                      gravityUntil = Date.now() + 5000;
+                      break;
+                  }
+                }
+              } else {
+                scoreRef.current += 5;
+              }
+              setScore(scoreRef.current);
+              break;
             }
-            setScore(scoreRef.current);
-            break;
+          }
+
+          if (ball.y - BALL_R > CANVAS_H) {
+            balls.splice(bi, 1);
           }
         }
 
-        if (ball.y - BALL_R > CANVAS_H) {
+        if (balls.length === 0) {
           livesRef.current--;
           setLives(livesRef.current);
           if (livesRef.current <= 0) {
@@ -324,8 +459,12 @@ export default function BlockCrasherGame() {
           } else {
             phaseRef.current = 'serving';
             setPhase('serving');
-            ball.dx = 0;
-            ball.dy = 0;
+            balls.push({ x: paddle.x + paddle.w / 2, y: PADDLE_Y - BALL_R - 1, dx: 0, dy: 0 });
+            speedMult = 1;
+            speedMultUntil = 0;
+            paddleMult = 1;
+            paddleMultUntil = 0;
+            gravityUntil = 0;
           }
         }
 
@@ -352,7 +491,7 @@ export default function BlockCrasherGame() {
         return p.life > 0;
       });
 
-      render(ctx, bricks, paddle, ball, particles);
+      render(ctx, bricks, paddle, balls, particles);
       animId = requestAnimationFrame(update);
     };
 
