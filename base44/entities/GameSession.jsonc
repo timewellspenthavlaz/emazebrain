@@ -1,0 +1,88 @@
+{
+  "name": "GameSession",
+  "type": "object",
+  "properties": {
+    "game_id": {
+      "type": "string",
+      "default": "block-crasher",
+      "title": "Game ID"
+    },
+    "patient_id": {
+      "type": "string",
+      "title": "Patient ID"
+    },
+    "patient_name": {
+      "type": "string",
+      "title": "Patient Name"
+    },
+    "session_id": {
+      "type": "string",
+      "title": "Session ID"
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Session Date"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0",
+      "title": "Payload Version"
+    },
+    "score": {
+      "type": "number",
+      "default": 0,
+      "title": "Final Score"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "default": 0,
+      "title": "Duration (seconds)"
+    },
+    "levels_completed": {
+      "type": "number",
+      "default": 0,
+      "title": "Levels Completed"
+    },
+    "highest_level": {
+      "type": "number",
+      "default": 0,
+      "title": "Highest Level Reached"
+    },
+    "lives_remaining": {
+      "type": "number",
+      "default": 0,
+      "title": "Lives Remaining"
+    },
+    "input_method": {
+      "type": "string",
+      "title": "Input Method"
+    },
+    "metrics": {
+      "type": "object",
+      "title": "Detailed Metrics (game-specific)"
+    },
+    "level_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "title": "Per-Level History"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "game_over",
+        "abandoned"
+      ],
+      "default": "completed",
+      "title": "Session Status"
+    }
+  },
+  "required": [
+    "patient_id",
+    "game_id"
+  ]
+}

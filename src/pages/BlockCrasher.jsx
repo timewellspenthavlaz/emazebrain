@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import { LEVELS } from '@/lib/blockCrasherLevels';
 import { assignSpecialBricks, getSpecialConfig } from '@/lib/specialBricks';
 import CountdownTimer from '@/components/games/CountdownTimer';
+import { GameMetrics } from '@/lib/gameMetrics';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronRight, RotateCcw, Trophy, Heart, Star } from 'lucide-react';
 
@@ -194,11 +195,16 @@ export default function BlockCrasherGame() {
   const calculatedStartLevel = difficultyLevel === 1 ? 1 : Math.min(10, difficultyLevel * 2);
   const initialLevel = parseInt(searchParams.get('level'), 10) || calculatedStartLevel;
   const backgroundUrl = searchParams.get('bg') || '';
+  const patientId = searchParams.get('patientId') || '';
+  const callbackUrl = searchParams.get('callbackUrl') || '';
 
   const canvasRef = useRef(null);
   const phaseRef = useRef('serving');
   const scoreRef = useRef(0);
   const livesRef = useRef(3);
+  const levelRef = useRef(level);
+  const metricsRef = useRef(null);
+  const metricsSentRef = useRef(false);
 
   const [phase, setPhase] = useState('serving');
   const [level, setLevel] = useState(Math.min(10, Math.max(1, initialLevel)));
@@ -210,6 +216,25 @@ export default function BlockCrasherGame() {
   const [timerStarted, setTimerStarted] = useState(false);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  useEffect(() => { levelRef.current = level; }, [level]);
+
+  // Initialize metrics tracker once
+  useEffect(() => {
+    metricsRef.current = new GameMetrics({ patientId, callbackUrl, gameId: 'block-crasher' });
+    metricsRef.current.startSession();
+    return () => {
+      if (metricsRef.current && !metricsSentRef.current) {
+        metricsSentRef.current = true;
+        metricsRef.current.setScore(scoreRef.current);
+        metricsRef.current.endLevel(false);
+        const payload = metricsRef.current.buildPayload(
+          'abandoned', scoreRef.current, levelRef.current - 1, levelRef.current, livesRef.current
+        );
+        metricsRef.current.sendResults(payload);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (phase === 'playing' && !timerStarted) setTimerStarted(true);
@@ -223,6 +248,15 @@ export default function BlockCrasherGame() {
         if (prev <= 1) {
           phaseRef.current = 'gameOver';
           setPhase('gameOver');
+          if (metricsRef.current && !metricsSentRef.current) {
+            metricsSentRef.current = true;
+            metricsRef.current.setScore(scoreRef.current);
+            metricsRef.current.endLevel(false);
+            const payload = metricsRef.current.buildPayload(
+              'game_over', scoreRef.current, levelRef.current - 1, levelRef.current, livesRef.current
+            );
+            metricsRef.current.sendResults(payload);
+          }
           return 0;
         }
         return prev - 1;
@@ -253,6 +287,10 @@ export default function BlockCrasherGame() {
 
     phaseRef.current = 'serving';
 
+    if (metricsRef.current) {
+      metricsRef.current.startLevel(level, bricks.length, scoreRef.current);
+    }
+
     const getCanvasX = (clientX) => {
       const rect = canvas.getBoundingClientRect();
       return (clientX - rect.left) * (CANVAS_W / rect.width);
@@ -260,14 +298,20 @@ export default function BlockCrasherGame() {
 
     const handleMove = (x) => {
       paddle.x = Math.max(0, Math.min(CANVAS_W - paddle.w, x - paddle.w / 2));
+      if (metricsRef.current) metricsRef.current.recordPaddleMove(paddle.x + paddle.w / 2);
     };
 
     const onMouseMove = (e) => {
       const rect = canvas.getBoundingClientRect();
       if (e.clientX < rect.left || e.clientX > rect.right) return;
+      if (metricsRef.current) metricsRef.current.setInputMethod('mouse');
       handleMove(getCanvasX(e.clientX));
     };
-    const onTouchMove = (e) => { e.preventDefault(); handleMove(getCanvasX(e.touches[0].clientX)); };
+    const onTouchMove = (e) => {
+      e.preventDefault();
+      if (metricsRef.current) metricsRef.current.setInputMethod('touch');
+      handleMove(getCanvasX(e.touches[0].clientX));
+    };
 
     const onLaunch = () => {
       if (phaseRef.current === 'serving') {
@@ -281,6 +325,7 @@ export default function BlockCrasherGame() {
     };
 
     const onKeyDown = (e) => {
+      if (metricsRef.current) metricsRef.current.setInputMethod('keyboard');
       if (e.key === 'ArrowLeft') handleMove(paddle.x + paddle.w / 2 - 30);
       else if (e.key === 'ArrowRight') handleMove(paddle.x + paddle.w / 2 + 30);
       else if (e.key === ' ') { e.preventDefault(); onLaunch(); }
@@ -339,6 +384,7 @@ export default function BlockCrasherGame() {
             const angle = (hitPos - 0.5) * Math.PI * 0.7;
             ball.dx = sp * Math.sin(angle);
             ball.dy = -Math.abs(sp * Math.cos(angle));
+            if (metricsRef.current) metricsRef.current.recordPaddleHit(paddle.x + paddle.w / 2, ball.x);
           }
 
           for (let i = 0; i < bricks.length; i++) {
@@ -365,14 +411,17 @@ export default function BlockCrasherGame() {
               if (b.hp <= 0) {
                 b.dead = true;
                 scoreRef.current += 10;
+                if (metricsRef.current) metricsRef.current.recordBrickDestroyed(b.isTough);
                 spawnParticles(b.x + b.w / 2, b.y + b.h / 2, b.colors[0], particles);
 
                 if (b.special) {
+                  const m = metricsRef.current;
                   switch (b.special) {
                     case 'exploding': {
                       const radius = (BRICK_W + BRICK_GAP) * 1.5;
                       const cx = b.x + b.w / 2;
                       const cy = b.y + b.h / 2;
+                      let kills = 0;
                       for (const other of bricks) {
                         if (other.dead || other === b) continue;
                         const ox = other.x + other.w / 2;
@@ -382,9 +431,11 @@ export default function BlockCrasherGame() {
                           other.hp = 0;
                           other.dead = true;
                           scoreRef.current += 10;
+                          kills++;
                           spawnParticles(ox, oy, other.colors[0], particles);
                         }
                       }
+                      if (m) m.recordSpecialBrick('exploding', kills);
                       break;
                     }
                     case 'slow_down': {
@@ -395,28 +446,34 @@ export default function BlockCrasherGame() {
                         const cs = Math.sqrt(sb.dx * sb.dx + sb.dy * sb.dy);
                         if (cs > 0) { sb.dx = (sb.dx / cs) * newSp; sb.dy = (sb.dy / cs) * newSp; }
                       }
+                      if (m) m.recordSpecialBrick('slow_down', 0);
                       break;
                     }
                     case 'rocket': {
                       const colCenter = b.x + b.w / 2;
+                      let kills = 0;
                       for (const other of bricks) {
                         if (other.dead || other === b) continue;
                         if (Math.abs((other.x + other.w / 2) - colCenter) < BRICK_W / 2 + BRICK_GAP) {
                           other.hp = 0;
                           other.dead = true;
                           scoreRef.current += 10;
+                          kills++;
                           spawnParticles(other.x + other.w / 2, other.y + other.h / 2, other.colors[0], particles);
                         }
                       }
+                      if (m) m.recordSpecialBrick('rocket', kills);
                       break;
                     }
                     case 'paddle_thin':
                       paddleMult = 0.7;
                       paddleMultUntil = Date.now() + 10000;
+                      if (m) m.recordSpecialBrick('paddle_thin', 0);
                       break;
                     case 'paddle_wide':
                       paddleMult = 1.5;
                       paddleMultUntil = Date.now() + 10000;
+                      if (m) m.recordSpecialBrick('paddle_wide', 0);
                       break;
                     case 'multi_ball': {
                       if (balls.length < 10) {
@@ -429,10 +486,12 @@ export default function BlockCrasherGame() {
                           });
                         }
                       }
+                      if (m) m.recordSpecialBrick('multi_ball', 0);
                       break;
                     }
                     case 'gravity':
                       gravityUntil = Date.now() + 5000;
+                      if (m) m.recordSpecialBrick('gravity', 0);
                       break;
                   }
                 }
@@ -446,6 +505,7 @@ export default function BlockCrasherGame() {
 
           if (ball.y - BALL_R > CANVAS_H) {
             balls.splice(bi, 1);
+            if (metricsRef.current) metricsRef.current.recordBallLost();
           }
         }
 
@@ -455,6 +515,15 @@ export default function BlockCrasherGame() {
           if (livesRef.current <= 0) {
             phaseRef.current = 'gameOver';
             setPhase('gameOver');
+            if (metricsRef.current && !metricsSentRef.current) {
+              metricsSentRef.current = true;
+              metricsRef.current.setScore(scoreRef.current);
+              metricsRef.current.endLevel(false);
+              const payload = metricsRef.current.buildPayload(
+                'game_over', scoreRef.current, level - 1, level, livesRef.current
+              );
+              metricsRef.current.sendResults(payload);
+            }
           } else {
             phaseRef.current = 'serving';
             setPhase('serving');
@@ -469,11 +538,22 @@ export default function BlockCrasherGame() {
 
         if (bricks.every(b => b.dead)) {
           scoreRef.current += 50;
+          if (metricsRef.current) {
+            metricsRef.current.setScore(scoreRef.current);
+            metricsRef.current.endLevel(true);
+          }
           setScore(scoreRef.current);
           if (level >= 10) {
             phaseRef.current = 'allComplete';
             setPhase('allComplete');
             fireBigConfetti();
+            if (metricsRef.current && !metricsSentRef.current) {
+              metricsSentRef.current = true;
+              const payload = metricsRef.current.buildPayload(
+                'completed', scoreRef.current, level, level, livesRef.current
+              );
+              metricsRef.current.sendResults(payload);
+            }
           } else {
             phaseRef.current = 'levelComplete';
             setPhase('levelComplete');
@@ -516,6 +596,11 @@ export default function BlockCrasherGame() {
   const retry = () => {
     scoreRef.current = 0;
     livesRef.current = 3;
+    metricsSentRef.current = false;
+    if (metricsRef.current) {
+      metricsRef.current = new GameMetrics({ patientId, callbackUrl, gameId: 'block-crasher' });
+      metricsRef.current.startSession();
+    }
     setScore(0);
     setLives(3);
     setTimeLeft(timeToPlay);
@@ -527,6 +612,11 @@ export default function BlockCrasherGame() {
   const replay = () => {
     scoreRef.current = 0;
     livesRef.current = 3;
+    metricsSentRef.current = false;
+    if (metricsRef.current) {
+      metricsRef.current = new GameMetrics({ patientId, callbackUrl, gameId: 'block-crasher' });
+      metricsRef.current.startSession();
+    }
     setScore(0);
     setLives(3);
     setTimeLeft(timeToPlay);
