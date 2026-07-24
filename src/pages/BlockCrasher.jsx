@@ -13,8 +13,7 @@ const PADDLE_H = 14;
 const PADDLE_Y = 558;
 const BALL_R = 8;
 const BASE_SPEED = 3.5;
-// Level 1 = base speed; each level adds ~5% of base; Level 10 = 50% faster than Level 1.
-const getLevelSpeed = (lvl) => BASE_SPEED * (1 + (lvl - 1) * (0.5 / 9));
+const getLevelSpeed = () => BASE_SPEED;
 const BRICK_COLS = 10;
 const BRICK_W = 72;
 const BRICK_H = 22;
