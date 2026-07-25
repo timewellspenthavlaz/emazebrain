@@ -19,6 +19,16 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    // Standalone game route is public — skip auth checks entirely so a stale
+    // token doesn't trigger a 401 redirect away from the game.
+    const isPublicGameRoute = typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/block-crasher');
+    if (isPublicGameRoute) {
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+      return;
+    }
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
