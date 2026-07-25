@@ -242,7 +242,6 @@ export default function BlockCrasherGame() {
 
   useEffect(() => {
     if (timeToPlay <= 0 || !timerStarted) return;
-    if (phase !== 'serving' && phase !== 'playing') return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -263,7 +262,7 @@ export default function BlockCrasherGame() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [phase, timeToPlay]);
+  }, [timerStarted, timeToPlay]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
