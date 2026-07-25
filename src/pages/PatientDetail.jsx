@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, User, Calendar, Stethoscope, Building2, Brain, Activity, FileText, TrendingUp, Gamepad2 } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Stethoscope, Building2, Brain, Activity, FileText, TrendingUp } from 'lucide-react';
 import StatusBadge from '@/components/admin/StatusBadge';
 import TherapyLogSection from '@/components/therapy/TherapyLogSection';
+import GameSessionList from '@/components/games/GameSessionList';
 import { calcAgeGroup } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -252,86 +253,7 @@ export default function PatientDetail() {
           </Card>
 
           {/* Game Sessions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Gamepad2 className="w-4 h-4 text-accent" /> Game Sessions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {gameSessions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No game sessions recorded</p>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    <div className="text-center p-3 rounded-lg bg-primary/5">
-                      <p className="text-xs text-muted-foreground">Games Played</p>
-                      <p className="text-lg font-bold text-primary">{gameSessions.length}</p>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-accent/5">
-                      <p className="text-xs text-muted-foreground">Best Score</p>
-                      <p className="text-lg font-bold text-accent">{Math.max(...gameSessions.map(g => g.score || 0))}</p>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-purple-50">
-                      <p className="text-xs text-muted-foreground">Highest Level</p>
-                      <p className="text-lg font-bold text-purple-600">{Math.max(...gameSessions.map(g => g.highest_level || 0))}/10</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {gameSessions
-                      .sort((a, b) => new Date(b.session_date || b.created_date) - new Date(a.session_date || a.created_date))
-                      .slice(0, 10)
-                      .map(g => (
-                      <div key={g.id} className="p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent/10">
-                            <Gamepad2 className="w-4 h-4 text-accent" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium capitalize">{g.game_id?.replace(/-/g, ' ') || 'Game'}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {moment(g.session_date || g.created_date).format('MMM DD, YYYY HH:mm')} · {Math.round(g.duration_seconds || 0)}s
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-yellow-500">{g.score || 0}</p>
-                              <p className="text-xs text-muted-foreground">score</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-primary">{g.highest_level || 0}/10</p>
-                              <p className="text-xs text-muted-foreground">level</p>
-                            </div>
-                            <StatusBadge status={g.status} />
-                          </div>
-                        </div>
-                        {g.level_history && g.level_history.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-border">
-                            <p className="text-xs text-muted-foreground mb-1">Level Breakdown</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {g.level_history.map((lh, i) => (
-                                <span
-                                  key={i}
-                                  className={`px-2 py-0.5 rounded text-[11px] font-medium ${
-                                    lh.completed
-                                      ? 'bg-green-100 text-green-700'
-                                      : 'bg-red-100 text-red-700'
-                                  }`}
-                                  title={`Level ${lh.level}: ${lh.completed ? 'Completed' : 'Not completed'} · Score: ${lh.score_earned || 0} · ${lh.bricks_destroyed || 0} bricks`}
-                                >
-                                  L{lh.level}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <GameSessionList gameSessions={gameSessions} />
 
           {/* Therapy Log */}
           <TherapyLogSection patient={patient} />
