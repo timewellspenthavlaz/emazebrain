@@ -202,12 +202,12 @@ export default function BlockCrasherGame() {
   const phaseRef = useRef('serving');
   const scoreRef = useRef(0);
   const livesRef = useRef(3);
-  const levelRef = useRef(level);
   const metricsRef = useRef(null);
   const metricsSentRef = useRef(false);
 
   const [phase, setPhase] = useState('serving');
   const [level, setLevel] = useState(Math.min(10, Math.max(1, initialLevel)));
+  const levelRef = useRef(level);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [retryNonce, setRetryNonce] = useState(0);
