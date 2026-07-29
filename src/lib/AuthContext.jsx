@@ -22,7 +22,8 @@ export const AuthProvider = ({ children }) => {
     // Standalone game route is public — skip auth checks entirely so a stale
     // token doesn't trigger a 401 redirect away from the game.
     const isPublicGameRoute = typeof window !== 'undefined' &&
-      window.location.pathname.startsWith('/block-crasher');
+      (window.location.pathname.startsWith('/block-crasher') ||
+       window.location.pathname.startsWith('/catch-me-if-you-can'));
     if (isPublicGameRoute) {
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);

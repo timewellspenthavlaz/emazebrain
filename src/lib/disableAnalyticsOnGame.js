@@ -10,7 +10,7 @@
  * This module MUST be imported before @base44/sdk is evaluated (i.e. before
  * App → base44Client → @base44/sdk), so it is imported first in main.jsx.
  */
-if (typeof window !== 'undefined' && window.location.pathname.startsWith('/block-crasher')) {
+if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/block-crasher') || window.location.pathname.startsWith('/catch-me-if-you-can'))) {
   try {
     const url = new URL(window.location.href);
     if (url.searchParams.get('analytics-enable') !== 'false') {

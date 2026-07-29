@@ -19,17 +19,19 @@ import Taxonomy from '@/pages/Taxonomy';
 import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
 import BlockCrasher from '@/pages/BlockCrasher';
+import CatchMeIfYouCan from '@/pages/CatchMeIfYouCan';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
 
-  // The standalone Block Crasher game is playable without admin login
-  // (it receives patientId + callbackUrl via URL params), so bypass the auth gate.
-  if (location.pathname.startsWith('/block-crasher')) {
+  // Standalone games are playable without admin login
+  // (they receive patientId + callbackUrl via URL params), so bypass the auth gate.
+  if (location.pathname.startsWith('/block-crasher') || location.pathname.startsWith('/catch-me-if-you-can')) {
     return (
       <Routes>
         <Route path="/block-crasher" element={<BlockCrasher />} />
+        <Route path="/catch-me-if-you-can" element={<CatchMeIfYouCan />} />
       </Routes>
     );
   }
@@ -72,6 +74,7 @@ const AuthenticatedApp = () => {
         </Route>
       </Route>
       <Route path="/block-crasher" element={<BlockCrasher />} />
+      <Route path="/catch-me-if-you-can" element={<CatchMeIfYouCan />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
