@@ -2,6 +2,7 @@ import React from 'react';
 import { Gamepad2, Clock, Star, Heart, Target, MousePointer, Zap, TrendingDown, PauseCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/admin/StatusBadge';
+import CatchMeSessionCard from '@/components/games/CatchMeSessionCard';
 import moment from 'moment';
 
 function MetricBox({ icon: Icon, label, value, color = 'text-foreground' }) {
@@ -55,6 +56,17 @@ export default function GameSessionList({ gameSessions }) {
   const highestLevel = Math.max(...sorted.map(g => g.highest_level || 0));
   const totalBricks = sorted.reduce((sum, g) => sum + (g.metrics?.total_bricks_destroyed || 0), 0);
 
+  const hasCatchMe = sorted.some(g => g.game_id === 'catch-me-if-you-can');
+  const hasBlockCrasher = sorted.some(g => g.game_id === 'block-crasher');
+  const bestAccuracy = Math.max(
+    0,
+    ...sorted
+      .filter(g => g.game_id === 'catch-me-if-you-can')
+      .map(g => g.metrics?.accuracy_rate || 0)
+  );
+  // Level cap depends on which game types are present (catch-me max = 9, block-crasher max = 10)
+  const levelCap = hasCatchMe && !hasBlockCrasher ? 9 : 10;
+
   return (
     <Card>
       <CardHeader>
@@ -75,17 +87,27 @@ export default function GameSessionList({ gameSessions }) {
           </div>
           <div className="text-center p-3 rounded-lg bg-purple-50">
             <p className="text-xs text-muted-foreground">Highest Level</p>
-            <p className="text-lg font-bold text-purple-600">{highestLevel}/10</p>
+            <p className="text-lg font-bold text-purple-600">{highestLevel}/{levelCap}</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-green-50">
-            <p className="text-xs text-muted-foreground">Bricks Broken</p>
-            <p className="text-lg font-bold text-green-600">{totalBricks}</p>
-          </div>
+          {hasCatchMe ? (
+            <div className="text-center p-3 rounded-lg bg-cyan-50">
+              <p className="text-xs text-muted-foreground">Best Accuracy</p>
+              <p className="text-lg font-bold text-cyan-600">{Math.round(bestAccuracy * 100)}%</p>
+            </div>
+          ) : (
+            <div className="text-center p-3 rounded-lg bg-green-50">
+              <p className="text-xs text-muted-foreground">Bricks Broken</p>
+              <p className="text-lg font-bold text-green-600">{totalBricks}</p>
+            </div>
+          )}
         </div>
 
         {/* Session list */}
         <div className="space-y-3">
           {sorted.map(g => {
+            if (g.game_id === 'catch-me-if-you-can') {
+              return <CatchMeSessionCard key={g.id} g={g} />;
+            }
             const m = g.metrics || {};
             const specials = m.special_bricks_triggered || {};
 

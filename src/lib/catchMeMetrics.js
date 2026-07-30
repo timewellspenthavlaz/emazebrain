@@ -1,7 +1,9 @@
+import { sendGameResults } from '@/lib/gameResultSender';
+
 /**
  * CatchMeMetrics — metrics tracker for the Catch Me If You Can game.
- * Collects perceptual/attentional data during a session, then POSTs results
- * to a callback URL. Uses the same payload envelope as Block Crasher's
+ * Collects perceptual/attentional data during a session, then sends results
+ * to the backend. Uses the same payload envelope as Block Crasher's
  * GameMetrics so it works with the existing receiveGameResults backend.
  */
 export class CatchMeMetrics {
@@ -197,29 +199,6 @@ export class CatchMeMetrics {
   }
 
   async sendResults(payload) {
-    if (!this.callbackUrl) {
-      console.warn('[CatchMeMetrics] No callbackUrl set; results not sent');
-      return { ok: false, reason: 'no_callback_url' };
-    }
-    try {
-      const res = await fetch(this.callbackUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        console.error('[CatchMeMetrics] Callback failed:', res.status);
-        return { ok: false, reason: 'http_error', status: res.status };
-      }
-      return { ok: true, data: await res.json() };
-    } catch (err) {
-      console.error('[CatchMeMetrics] Send error:', err);
-      try {
-        const cache = JSON.parse(localStorage.getItem('pendingGameResults') || '[]');
-        cache.push({ url: this.callbackUrl, payload });
-        localStorage.setItem('pendingGameResults', JSON.stringify(cache));
-      } catch (e) { /* localStorage may be unavailable */ }
-      return { ok: false, reason: 'network_error', error: err.message };
-    }
+    return sendGameResults(payload, this.callbackUrl);
   }
 }

@@ -1,7 +1,8 @@
+import { sendGameResults } from '@/lib/gameResultSender';
+
 /**
  * GameMetrics — standalone metrics tracker for the Block Crasher game.
- * Collects gameplay data during a session, then POSTs results to a callback URL.
- * No Base44 SDK dependency — pure browser API (fetch + URLSearchParams).
+ * Collects gameplay data during a session, then sends results to the backend.
  */
 export class GameMetrics {
   constructor({ patientId, callbackUrl, gameId = 'block-crasher', version = '1.0' }) {
@@ -184,30 +185,6 @@ export class GameMetrics {
   }
 
   async sendResults(payload) {
-    if (!this.callbackUrl) {
-      console.warn('[GameMetrics] No callbackUrl set; results not sent');
-      return { ok: false, reason: 'no_callback_url' };
-    }
-    try {
-      const res = await fetch(this.callbackUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        console.error('[GameMetrics] Callback failed:', res.status, await res.text());
-        return { ok: false, reason: 'http_error', status: res.status };
-      }
-      return { ok: true, data: await res.json() };
-    } catch (err) {
-      console.error('[GameMetrics] Send error:', err);
-      // Cache in localStorage for retry
-      try {
-        const cache = JSON.parse(localStorage.getItem('pendingGameResults') || '[]');
-        cache.push({ url: this.callbackUrl, payload });
-        localStorage.setItem('pendingGameResults', JSON.stringify(cache));
-      } catch (e) { /* localStorage may be unavailable */ }
-      return { ok: false, reason: 'network_error', error: err.message };
-    }
+    return sendGameResults(payload, this.callbackUrl);
   }
 }
