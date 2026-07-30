@@ -199,6 +199,11 @@ export default function Games() {
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-cyan-600" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
+                        {item.title?.toLowerCase().includes('orbital') && (
+                          <a href="/orbital-order?difficulty_level=3&br=left&neon=0&bg=dark">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-500" title="Play Game"><Play className="w-4 h-4" /></Button>
+                          </a>
+                        )}
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Quick Preview"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleStatus(item)}>

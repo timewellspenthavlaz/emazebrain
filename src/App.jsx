@@ -20,6 +20,7 @@ import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
 import BlockCrasher from '@/pages/BlockCrasher';
 import CatchMeIfYouCan from '@/pages/CatchMeIfYouCan';
+import OrbitalOrder from '@/pages/OrbitalOrder';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -27,11 +28,12 @@ const AuthenticatedApp = () => {
 
   // Standalone games are playable without admin login
   // (they receive patientId + callbackUrl via URL params), so bypass the auth gate.
-  if (location.pathname.startsWith('/block-crasher') || location.pathname.startsWith('/catch-me-if-you-can')) {
+  if (location.pathname.startsWith('/block-crasher') || location.pathname.startsWith('/catch-me-if-you-can') || location.pathname.startsWith('/orbital-order')) {
     return (
       <Routes>
         <Route path="/block-crasher" element={<BlockCrasher />} />
         <Route path="/catch-me-if-you-can" element={<CatchMeIfYouCan />} />
+        <Route path="/orbital-order" element={<OrbitalOrder />} />
       </Routes>
     );
   }
@@ -75,6 +77,7 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="/block-crasher" element={<BlockCrasher />} />
       <Route path="/catch-me-if-you-can" element={<CatchMeIfYouCan />} />
+      <Route path="/orbital-order" element={<OrbitalOrder />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
