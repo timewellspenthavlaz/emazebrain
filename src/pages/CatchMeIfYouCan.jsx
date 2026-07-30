@@ -359,6 +359,14 @@ export default function CatchMeIfYouCanGame() {
     return result.isCorrect ? 'correct' : 'wrong';
   };
 
+  const companionPlaceholder = stage === 1 ? (
+    <div className="hidden lg:flex lg:flex-1 lg:max-w-[45%] items-center justify-center">
+      <div className="aspect-square w-full max-w-[200px] rounded-xl border-2 border-dashed border-neutral-700 flex items-center justify-center">
+        <p className="text-neutral-600 text-xs text-center px-4">More tiles coming soon</p>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="h-screen overflow-hidden flex flex-col items-center bg-neutral-950 px-2 py-2">
       {/* HUD */}
@@ -418,6 +426,7 @@ export default function CatchMeIfYouCanGame() {
 
         {/* Grids */}
         <div className="relative w-full max-w-5xl flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-4">
+          {companionPlaceholder && orientation === 'left' && companionPlaceholder}
           {sortedGrids.map((grid) => (
             <div key={grid.type} className={`w-full ${sortedGrids.length === 1 ? 'max-w-sm' : 'lg:flex-1 lg:max-w-[45%]'}`}>
               <ColorGrid
@@ -428,13 +437,7 @@ export default function CatchMeIfYouCanGame() {
               />
             </div>
           ))}
-          {stage === 1 && (
-            <div className="hidden lg:flex lg:flex-1 lg:max-w-[45%] items-center justify-center">
-              <div className="aspect-square w-full max-w-[200px] rounded-xl border-2 border-dashed border-neutral-700 flex items-center justify-center">
-                <p className="text-neutral-600 text-xs text-center px-4">More tiles coming soon</p>
-              </div>
-            </div>
-          )}
+          {companionPlaceholder && orientation === 'right' && companionPlaceholder}
         </div>
 
         {/* Level up flash */}
