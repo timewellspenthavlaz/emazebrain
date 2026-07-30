@@ -427,16 +427,27 @@ export default function CatchMeIfYouCanGame() {
         {/* Grids */}
         <div className="relative w-full max-w-5xl flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-4">
           {companionPlaceholder && orientation === 'left' && companionPlaceholder}
-          {sortedGrids.map((grid) => (
-            <div key={grid.type} className={`w-full ${sortedGrids.length === 1 ? 'max-w-sm' : 'lg:flex-1 lg:max-w-[45%]'}`}>
-              <ColorGrid
-                grid={grid}
-                selectedIndex={selections[grid.type]?.index}
-                feedback={getGridFeedback(grid.type)}
-                onSelect={(idx) => handleSelect(grid.type, idx)}
-              />
-            </div>
-          ))}
+          {sortedGrids.map((grid) => {
+            const anchor = sortedGrids.find((g) => g.type === 'anchor');
+            const isCompanion = grid.type === 'companion' && anchor;
+            // Size the companion grid so each square matches the anchor grid's square size.
+            const companionWidthPct = isCompanion ? (grid.size / anchor.size) * 100 : 100;
+            return (
+              <div key={grid.type} className={`w-full ${sortedGrids.length === 1 ? 'max-w-sm' : 'lg:flex-1 lg:max-w-[45%]'}`}>
+                <div
+                  className="w-full mx-auto"
+                  style={isCompanion ? { maxWidth: `${companionWidthPct}%` } : undefined}
+                >
+                  <ColorGrid
+                    grid={grid}
+                    selectedIndex={selections[grid.type]?.index}
+                    feedback={getGridFeedback(grid.type)}
+                    onSelect={(idx) => handleSelect(grid.type, idx)}
+                  />
+                </div>
+              </div>
+            );
+          })}
           {companionPlaceholder && orientation === 'right' && companionPlaceholder}
         </div>
 
