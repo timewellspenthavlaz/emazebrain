@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RotateCcw, Eye, Activity, Timer, CheckCircle2, XCircle } from 'lucide-react';
 import Hud from '@/components/orbital/Hud';
+import RuleModal from '@/components/orbital/RuleModal';
 import PlayField from '@/components/orbital/PlayField';
 import { OrbitalMetrics } from '@/lib/orbitalOrder/metrics';
 import {
@@ -38,6 +39,7 @@ export default function OrbitalOrder() {
   const [litId, setLitId] = useState(null);
   const [isSwitchTrial, setIsSwitchTrial] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(true);
+  const [peeking, setPeeking] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [timeLeft, setTimeLeft] = useState(cfg.time_to_play);
   const [countdown, setCountdown] = useState(cfg.countdown_timer || 0);
@@ -60,7 +62,7 @@ export default function OrbitalOrder() {
   const glyphTypeRef = useRef(cfg.glyphType);
   const blockNumRef = useRef(1);
   const trialsInBlockRef = useRef(0);
-  const blockLengthRef = useRef(randInt(3, 5));
+  const blockLengthRef = useRef(randInt(5, 8));
   const ruleHistoryRef = useRef([]);
   const prevExpectedRef = useRef(null);
   const pendingSwitchRef = useRef(false);
@@ -157,7 +159,7 @@ export default function OrbitalOrder() {
     if (seg === 'rules') {
       setSegmentTotal(MAX_RULE_TRIALS);
       blockNumRef.current = 1; trialsInBlockRef.current = 0;
-      blockLengthRef.current = randInt(3, 5);
+      blockLengthRef.current = randInt(5, 8);
       ruleHistoryRef.current = [];
       const r = generateRule([], effectiveDiffRef.current, pool);
       r.glyphType = cfg.glyphType;
@@ -400,7 +402,7 @@ export default function OrbitalOrder() {
           if (fk(newRule.filter) !== fk(oldRule.filter)) changed.push('filter');
           ruleRef.current = newRule; ruleHistoryRef.current.push(newRule);
           blockNumRef.current += 1; trialsInBlockRef.current = 0;
-          blockLengthRef.current = randInt(3, 5);
+          blockLengthRef.current = randInt(5, 8);
           pendingSwitchRef.current = true; pendingChangedRef.current = changed;
           metricsRef.current?.startBlock(blockNumRef.current, newRule);
         }
@@ -426,21 +428,23 @@ export default function OrbitalOrder() {
     phaseRef.current = 'summary'; setPhase('summary');
   }
 
-  // ---- peek (rule_visible=onrequest) ----
-  function togglePeek() {
-    if (!peekingRef.current) {
-      peekingRef.current = true;
-      metricsRef.current?.recordPeekStart();
-      setBannerVisible(true);
-      // auto-hide after 2.5s
-      setTimeout(() => {
-        if (peekingRef.current) { peekingRef.current = false; metricsRef.current?.recordPeekEnd(); if (cfg.rule_visible === 'onrequest') setBannerVisible(false); }
-      }, 2500);
-    } else {
-      peekingRef.current = false;
+  // ---- rule modal (reveal dismiss + corner "?" peek) ----
+  function closeRuleModal() {
+    if (phaseRef.current === 'reveal') { startResponse(); return; }
+    if (peekingRef.current) {
+      peekingRef.current = false; setPeeking(false);
       metricsRef.current?.recordPeekEnd();
-      if (cfg.rule_visible === 'onrequest') setBannerVisible(false);
     }
+  }
+
+  function openPeek() {
+    if (peekingRef.current) return;
+    if (phaseRef.current === 'reveal') { startResponse(); return; }
+    peekingRef.current = true; setPeeking(true);
+    metricsRef.current?.recordPeekStart();
+    setTimeout(() => {
+      if (peekingRef.current) { peekingRef.current = false; setPeeking(false); metricsRef.current?.recordPeekEnd(); }
+    }, 3000);
   }
 
   // ---- start gate (overlay, so the field stays mounted for measuring) ----
@@ -531,13 +535,20 @@ export default function OrbitalOrder() {
         )}
 
         <Hud
-          rule={rule} labels={labels} changedClauses={changedClauses}
           progress={{ done: trialIndex + (phase === 'gap' || phase === 'feedback' ? 1 : 0), total: segmentTotal }}
           countdown={countdownData}
-          ruleVisible={cfg.rule_visible} bannerVisible={bannerVisible}
-          onPeek={togglePeek} demo={!cfg.patientId} neon={neon} chrome={chrome}
+          demo={!cfg.patientId} chrome={chrome}
           segmentLabel={segmentLabel}
         />
+
+        {started && segment !== 'summary' && segment !== 'motor' && (
+          <RuleModal
+            expanded={phase === 'reveal' || peeking}
+            labels={labels} rule={rule} chrome={chrome} neon={neon}
+            width={fieldSize.width} height={fieldSize.height}
+            onDismiss={closeRuleModal} onOpen={openPeek} peeking={peeking}
+          />
+        )}
 
         {/* Exit */}
         <Link to="/games" className="absolute bottom-3 left-3 z-30">
@@ -556,13 +567,6 @@ export default function OrbitalOrder() {
               {feedback.correct ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
               {feedback.message}
             </div>
-          </div>
-        )}
-
-        {/* Reveal hint */}
-        {phase === 'reveal' && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20 text-center pointer-events-none">
-            <p className="text-xs opacity-60 uppercase tracking-widest">tap to start</p>
           </div>
         )}
 
