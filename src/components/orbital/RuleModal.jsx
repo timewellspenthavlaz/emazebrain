@@ -30,26 +30,20 @@ function Row({ icon: Icon, label, value, chrome, colorCue, neon, rowBg, rowFg })
 }
 
 function RuleCard({ labels, rule, chrome, neon, peeking, glassBg, rowBg, rowFg }) {
-  const filterToken = rule?.filter?.colors?.[0];
-  const isBottomTop = rule?.traversal === 'BOTTOM_TO_TOP';
+  const skipToken = rule?.skip;
   const isAscending = rule?.ordering === 'ASCENDING';
-  const DirectionIcon = isBottomTop ? ArrowUp : ArrowDown;
   const SortIcon = isAscending ? ArrowUp : ArrowDown;
 
   return (
-    <div className="rounded-3xl p-5 w-[290px] shadow-2xl"
+    <div className="rounded-3xl p-5 w-[270px] shadow-2xl"
       style={{ background: glassBg, backdropFilter: 'blur(20px)', color: chrome }}>
       <p className="text-center text-[11px] font-bold uppercase tracking-[0.25em] opacity-50 mb-4">Goal</p>
       <div className="space-y-2.5">
-        <Row icon={DirectionIcon} label="Direction" value={labels.traversal}
-          chrome={chrome} rowBg={rowBg} rowFg={rowFg} />
         <Row icon={SortIcon} label="Sort" value={labels.ordering}
           chrome={chrome} rowBg={rowBg} rowFg={rowFg} />
-        {labels.filter && (
-          <Row icon={Ban} label={rule.filter.mode === 'INCLUDE_ONLY' ? 'Keep Only' : 'Skip'}
-            value={filterToken ? filterToken.charAt(0) + filterToken.slice(1).toLowerCase() : labels.filter}
-            chrome={chrome} colorCue={filterToken} neon={neon} rowBg={rowBg} rowFg={rowFg} />
-        )}
+        <Row icon={Ban} label="Skip"
+          value={skipToken ? skipToken.charAt(0) + skipToken.slice(1).toLowerCase() : ''}
+          chrome={chrome} colorCue={skipToken} neon={neon} rowBg={rowBg} rowFg={rowFg} />
       </div>
       <p className="text-center text-xs opacity-50 mt-4">{peeking ? 'Tap to close' : 'Tap to begin'}</p>
     </div>

@@ -8,7 +8,7 @@ import PlayField from '@/components/orbital/PlayField';
 import { OrbitalMetrics } from '@/lib/orbitalOrder/metrics';
 import {
   parseParams, resolveBg, chromeColor, DIFFICULTY, PROBE_DIFFICULTY, MAX_RULE_TRIALS,
-  SEGMENTS, responseWindowMs, GLYPH_SETS,
+  SEGMENTS, responseWindowMs, GLYPH_SETS, STARTING_LIVES, SCORE_PER_TAP, CHAIN_BONUS,
 } from '@/lib/orbitalOrder/config';
 import {
   generateRule, generateSpheres, solveChain, classifyError, hasTies, sessionPool,
@@ -30,7 +30,7 @@ export default function OrbitalOrder() {
   const [trialIndex, setTrialIndex] = useState(0);
   const [phase, setPhase] = useState('reveal'); // reveal | response | feedback | gap
   const [rule, setRule] = useState(null);
-  const [labels, setLabels] = useState({ traversal: '', ordering: '', filter: null });
+  const [labels, setLabels] = useState({ ordering: '', skip: '' });
   const [changedClauses, setChangedClauses] = useState([]);
   const [spheres, setSpheres] = useState([]);
   const [committed, setCommitted] = useState([]);
@@ -47,6 +47,8 @@ export default function OrbitalOrder() {
   const [fieldSize, setFieldSize] = useState({ width: 0, height: 0 });
   const [started, setStarted] = useState(false);
   const [segmentTotal, setSegmentTotal] = useState(SEGMENTS.PRACTICE.trials);
+  const [lives, setLives] = useState(STARTING_LIVES);
+  const [score, setScore] = useState(0);
 
   // ---- refs (timing-critical) ----
   const metricsRef = useRef(null);
@@ -77,6 +79,7 @@ export default function OrbitalOrder() {
   const peekingRef = useRef(false);
   const litIdRef = useRef(null);
   const countdownRef = useRef(cfg.countdown_timer || 0);
+  const livesRef = useRef(STARTING_LIVES);
   const fieldRef = useRef(null);
   const [trialNonce, setTrialNonce] = useState(0);
 
@@ -194,7 +197,7 @@ export default function OrbitalOrder() {
 
     if (seg === 'motor') {
       const s = spheresRef.current.length ? spheresRef.current : generateSpheres(
-        { traversal: 'BOTTOM_TO_TOP', ordering: 'ASCENDING', filter: null, glyphType: 'DIGITS' },
+        { ordering: 'ASCENDING', skip: pool[0], glyphType: 'DIGITS' },
         Math.min(cfg.difficulty_level, 2), 'DIGITS', pool
       );
       spheresRef.current = s; setSpheres(s);
@@ -270,12 +273,22 @@ export default function OrbitalOrder() {
 
   function onTimeout() {
     if (phaseRef.current !== 'response') return;
+    const seg = segmentRef.current;
+    const isScored = seg === 'probe' || seg === 'rules';
     metricsRef.current?.log('TIMEOUT', { trial: trialIndexRef.current });
     metricsRef.current?.endTrial({ outcome: 'INCORRECT', errorClass: 'TIMEOUT' });
-    setFeedback({ correct: false, message: 'Time up' });
+    if (isScored) {
+      metricsRef.current?.loseLife();
+      livesRef.current -= 1; setLives(livesRef.current);
+    }
+    setFeedback({ correct: false, message: isScored && livesRef.current <= 0 ? 'Game Over' : 'Time up' });
     phaseRef.current = 'feedback'; setPhase('feedback');
     if (countdownIntervalRef.current) { clearInterval(countdownIntervalRef.current); countdownIntervalRef.current = null; }
-    feedbackTimeoutRef.current = setTimeout(() => afterTrial('INCORRECT'), 900);
+    if (isScored && livesRef.current <= 0) {
+      feedbackTimeoutRef.current = setTimeout(() => endSession('GAME_OVER'), 900);
+    } else {
+      feedbackTimeoutRef.current = setTimeout(() => afterTrial('INCORRECT'), 900);
+    }
   }
 
   // ---- tap handling ----
@@ -314,12 +327,15 @@ export default function OrbitalOrder() {
         pos: { x: sphere.x, y: sphere.y, z: 0 }, correct: true, errorClass: null,
         sinceLastTapMs: 0,
       });
+      setScore(metricsRef.current?.score ?? 0);
 
       if (committedRef.current.length >= expected.length) {
-        // chain complete
+        // chain complete — bonus
+        metricsRef.current?.addChainBonus();
+        setScore(metricsRef.current?.score ?? 0);
         metricsRef.current?.endTrial({ outcome: 'CORRECT', errorClass: null });
         phaseRef.current = 'feedback'; setPhase('feedback');
-        setFeedback({ correct: true, message: 'Complete' });
+        setFeedback({ correct: true, message: `+${CHAIN_BONUS} Chain!` });
         if (countdownIntervalRef.current) { clearInterval(countdownIntervalRef.current); countdownIntervalRef.current = null; }
         feedbackTimeoutRef.current = setTimeout(() => afterTrial('CORRECT'), 450);
       }
@@ -347,10 +363,16 @@ export default function OrbitalOrder() {
     }
 
     metricsRef.current?.endTrial({ outcome: 'INCORRECT', errorClass: errClass || 'RANDOM' });
+    metricsRef.current?.loseLife();
+    livesRef.current -= 1; setLives(livesRef.current);
     phaseRef.current = 'feedback'; setPhase('feedback');
-    setFeedback({ correct: false, message: `Chain broke at step ${committedCount + 1}` });
+    setFeedback({ correct: false, message: livesRef.current <= 0 ? 'Game Over' : 'Chain broke (−1 life)' });
     if (countdownIntervalRef.current) { clearInterval(countdownIntervalRef.current); countdownIntervalRef.current = null; }
-    feedbackTimeoutRef.current = setTimeout(() => afterTrial('INCORRECT'), 900);
+    if (livesRef.current <= 0) {
+      feedbackTimeoutRef.current = setTimeout(() => endSession('GAME_OVER'), 900);
+    } else {
+      feedbackTimeoutRef.current = setTimeout(() => afterTrial('INCORRECT'), 900);
+    }
   }
 
   // ---- after trial → next ----
@@ -396,10 +418,8 @@ export default function OrbitalOrder() {
           const newRule = generateRule(ruleHistoryRef.current, effectiveDiffRef.current, pool);
           const oldRule = ruleRef.current;
           const changed = [];
-          if (newRule.traversal !== oldRule.traversal) changed.push('traversal');
           if (newRule.ordering !== oldRule.ordering) changed.push('ordering');
-          const fk = (f) => f ? `${f.mode}:${f.colors.join(',')}` : 'none';
-          if (fk(newRule.filter) !== fk(oldRule.filter)) changed.push('filter');
+          if (newRule.skip !== oldRule.skip) changed.push('skip');
           ruleRef.current = newRule; ruleHistoryRef.current.push(newRule);
           blockNumRef.current += 1; trialsInBlockRef.current = 0;
           blockLengthRef.current = randInt(5, 8);
@@ -419,8 +439,8 @@ export default function OrbitalOrder() {
     clearTimers();
     if (metricsRef.current && !sentRef.current) {
       sentRef.current = true;
-      const status = endReason === 'ABANDONED' ? 'abandoned' : 'completed';
-      metricsRef.current.endSession(endReason, status === 'completed');
+      const status = endReason === 'ABANDONED' ? 'abandoned' : (endReason === 'GAME_OVER' ? 'game_over' : 'completed');
+      metricsRef.current.endSession(endReason, status !== 'abandoned');
       const payload = metricsRef.current.buildPayload(status, endReason);
       metricsRef.current.sendResults(payload);
       setSummary({ ...payload.metrics.summary, endReason, durationSeconds: payload.metrics.duration_seconds, config: payload.metrics.config });
@@ -457,12 +477,13 @@ export default function OrbitalOrder() {
         </div>
         <h2 className="text-2xl font-bold mb-2">Orbital Order</h2>
         <p className="text-sm opacity-70 mb-6">
-          Tap the spheres in the order the rule dictates. The chain breaks at the first wrong tap — you'll see exactly where your procedure diverged.
+          Tap the spheres in ascending or descending order — but skip the "skip" colour. Wrong taps and timeouts cost a life. Complete chains for bonus points.
         </p>
         <div className="text-xs opacity-60 mb-6 space-y-1">
           <p>Brain region: {cfg.br} ({cfg.br === 'left' ? '2D disc' : '2D disc*'}) · Difficulty {cfg.difficulty_level} · Neon {neon ? 'on' : 'off'}</p>
           <p>Background {cfg.bg} · Rule visible: {cfg.rule_visible}</p>
           {cfg.time_to_play > 0 && <p>Time budget: {cfg.time_to_play}s</p>}
+          <p>Lives: {STARTING_LIVES} · +{SCORE_PER_TAP}/tap · +{CHAIN_BONUS}/chain</p>
           {!cfg.patientId && <p className="text-amber-400 font-semibold">Demo mode — session not recorded</p>}
         </div>
         <Button onClick={() => { setStarted(true); startSegment('practice'); }} style={{ background: '#0EA5A4', color: '#fff' }}>
@@ -482,6 +503,9 @@ export default function OrbitalOrder() {
             <h2 className="text-2xl font-bold">Session Summary</h2>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
+            <Stat label="Score" value={`${summary.score || 0}`} />
+            <Stat label="Lives Left" value={`${summary.livesRemaining ?? 0}`} />
+            <Stat label="Best Chain" value={`${summary.maxChain || 0}`} />
             <Stat label="Accuracy" value={`${Math.round((summary.accuracy || 0) * 100)}%`} />
             <Stat label="Trials" value={`${summary.trialsOffered}`} />
             <Stat label="Chain Completion" value={`${Math.round((summary.chainCompletionRate || 0) * 100)}%`} />
@@ -489,9 +513,8 @@ export default function OrbitalOrder() {
             <Stat label="Inter-tap Latency" value={`${Math.round(summary.interTapLatencyMs || 0)} ms`} />
             <Stat label="Rule Switch Cost" value={`${Math.round(summary.ruleSwitchCostMs || 0)} ms`} />
             <Stat label="Probe Accuracy" value={`${Math.round((summary.probeAccuracy || 0) * 100)}%`} />
-            <Stat label="Baseline Tap" value={`${Math.round(summary.baselineTapLatencyMs || 0)} ms`} />
+            <Stat label="Inhibition Errors" value={`${Math.round((summary.inhibitionIndex || 0) * 100)}%`} />
             <Stat label="Rule Rechecks" value={`${(summary.ruleRecheckCount || 0).toFixed(1)}`} />
-            <Stat label="Tie Accuracy Δ" value={`${Math.round((summary.tieAccuracyDelta || 0) * 100)}%`} />
           </div>
           {summary.errorProfile && (
             <div className="mt-4">
@@ -539,6 +562,8 @@ export default function OrbitalOrder() {
           countdown={countdownData}
           demo={!cfg.patientId} chrome={chrome}
           segmentLabel={segmentLabel}
+          lives={{ current: lives, total: STARTING_LIVES }}
+          score={score}
         />
 
         {started && segment !== 'summary' && segment !== 'motor' && (

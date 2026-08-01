@@ -21,15 +21,20 @@ export const COLOR_TOKENS = {
 };
 export const TOKEN_ORDER = ['BLUE', 'TEAL', 'LIME', 'AMBER', 'RED', 'MAGENTA', 'VIOLET', 'SLATE'];
 
-// Per-level parameters. Sphere count capped at 5; duplicate glyph pairs make
-// the traversal (secondary sort key) load-bearing.
+// Per-level parameters. Sphere count grows with difficulty; glyphs are unique
+// (no ties) so ordering is unambiguous without a traversal tie-break.
 export const DIFFICULTY = {
-  1: { sphereCount: 3, duplicatePairs: 0, revealMs: 2000, responseWindowMult: 1.8 },
-  2: { sphereCount: 3, duplicatePairs: 0, revealMs: 1700, responseWindowMult: 1.6 },
-  3: { sphereCount: 4, duplicatePairs: 2, revealMs: 1400, responseWindowMult: 1.4 },
-  4: { sphereCount: 5, duplicatePairs: 2, revealMs: 1200, responseWindowMult: 1.2 },
-  5: { sphereCount: 5, duplicatePairs: 3, revealMs: 1000, responseWindowMult: 1.0 },
+  1: { sphereCount: 4, revealMs: 2000, responseWindowMult: 1.8 },
+  2: { sphereCount: 5, revealMs: 1700, responseWindowMult: 1.6 },
+  3: { sphereCount: 6, revealMs: 1400, responseWindowMult: 1.4 },
+  4: { sphereCount: 7, revealMs: 1200, responseWindowMult: 1.2 },
+  5: { sphereCount: 8, revealMs: 1000, responseWindowMult: 1.0 },
 };
+
+// Lives + scoring — make the task playful (survive + score), not just an exercise.
+export const STARTING_LIVES = 3;
+export const SCORE_PER_TAP = 10;
+export const CHAIN_BONUS = 25;
 
 export const GLYPH_SETS = {
   DIGITS: ['2', '3', '4', '5', '6', '7', '8', '9'],

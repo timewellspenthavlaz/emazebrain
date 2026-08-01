@@ -1,4 +1,5 @@
 import React from 'react';
+import { Heart } from 'lucide-react';
 
 // Circular progress + countdown ring.
 function ProgressArc({ done, total, countdown }) {
@@ -25,11 +26,13 @@ function ProgressArc({ done, total, countdown }) {
 }
 
 /**
- * HUD — progress arc, countdown ring, segment label, demo badge.
+ * HUD — lives, score, progress arc, countdown ring, segment label, demo badge.
  * Rule display is handled by the RuleModal (central card + corner "?" pill).
  * All chrome is achromatic; the eight hues are reserved for sphere tokens.
  */
-export default function Hud({ progress, countdown, demo, chrome, segmentLabel }) {
+export default function Hud({ progress, countdown, demo, chrome, segmentLabel, lives, score }) {
+  const totalLives = lives?.total || 3;
+  const currentLives = lives?.current ?? 0;
   return (
     <div className="absolute top-0 left-0 right-0 z-30 flex items-start justify-end gap-3 px-4 pt-4 pointer-events-none">
       <div className="pointer-events-auto flex items-center gap-3">
@@ -44,6 +47,21 @@ export default function Hud({ progress, countdown, demo, chrome, segmentLabel })
             {segmentLabel}
           </span>
         )}
+        {/* Score */}
+        <div className="px-2.5 py-1 rounded-full text-xs font-bold tabular-nums"
+          style={{ background: 'rgba(20,22,28,0.5)', color: chrome, border: `1px solid ${chrome}22` }}>
+          {score ?? 0}
+        </div>
+        {/* Lives */}
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: totalLives }).map((_, i) => (
+            <Heart key={i} className="w-4 h-4"
+              style={{
+                color: i < currentLives ? '#FF4A6B' : `${chrome}33`,
+                fill: i < currentLives ? '#FF4A6B' : 'transparent',
+              }} />
+          ))}
+        </div>
         <ProgressArc done={progress.done} total={progress.total} countdown={countdown} />
       </div>
     </div>
