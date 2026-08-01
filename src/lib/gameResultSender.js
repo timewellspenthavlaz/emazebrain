@@ -11,6 +11,15 @@ import { base44 } from '@/api/base44Client';
  * role (no user auth required, so it works on the public game routes).
  */
 export async function sendGameResults(payload, callbackUrl = '') {
+  // Never persist a session that isn't tied to a real patient — orphaned rows
+  // (patient_id = "demo"/"unknown"/"") never appear on any profile, so the
+  // clinician would see a missing-results bug again. Guard in this shared
+  // chokepoint so every game (current and future) is protected.
+  const pid = payload?.patient_id;
+  if (!pid || pid === 'demo' || pid === 'unknown') {
+    console.warn('[gameResultSender] skipping persist: no real patient_id', { pid });
+    return { ok: false, skipped: true, reason: 'no_patient_id' };
+  }
   if (callbackUrl) {
     try {
       const res = await fetch(callbackUrl, {
