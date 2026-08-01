@@ -1,9 +1,13 @@
 import React from 'react';
-import { Gamepad2, Clock, Star, Heart, Target, MousePointer, Zap, TrendingDown, PauseCircle } from 'lucide-react';
+import { Gamepad2, Clock, Star, Heart, Target, MousePointer, Zap, TrendingDown, PauseCircle, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/admin/StatusBadge';
 import CatchMeSessionCard from '@/components/games/CatchMeSessionCard';
+import OrbitalOrderSessionCard from '@/components/games/OrbitalOrderSessionCard';
 import moment from 'moment';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
 
 function MetricBox({ icon: Icon, label, value, color = 'text-foreground' }) {
   return (
@@ -58,14 +62,39 @@ export default function GameSessionList({ gameSessions }) {
 
   const hasCatchMe = sorted.some(g => g.game_id === 'catch-me-if-you-can');
   const hasBlockCrasher = sorted.some(g => g.game_id === 'block-crasher');
+  const hasOrbital = sorted.some(g => g.game_id === 'orbital-order');
   const bestAccuracy = Math.max(
     0,
     ...sorted
       .filter(g => g.game_id === 'catch-me-if-you-can')
       .map(g => g.metrics?.accuracy_rate || 0)
   );
-  // Level cap depends on which game types are present (catch-me max = 9, block-crasher max = 10)
-  const levelCap = hasCatchMe && !hasBlockCrasher ? 9 : 10;
+  const bestChain = Math.max(
+    0,
+    ...sorted
+      .filter(g => g.game_id === 'orbital-order')
+      .map(g => g.metrics?.summary?.maxChain || 0)
+  );
+  // Level cap depends on which game types are present (orbital max = 5, catch-me max = 9, block-crasher max = 10)
+  const levelCap = hasOrbital && !hasCatchMe && !hasBlockCrasher ? 5
+    : hasCatchMe && !hasBlockCrasher ? 9 : 10;
+
+  // Progression trend — score & accuracy across sessions (oldest → newest)
+  const sessionAccuracy = (g) => {
+    if (g.game_id === 'orbital-order') return g.metrics?.summary?.accuracy ?? null;
+    if (g.game_id === 'catch-me-if-you-can') return g.metrics?.accuracy_rate ?? null;
+    if (g.game_id === 'block-crasher') return g.metrics?.paddle_miss_rate != null ? 1 - g.metrics.paddle_miss_rate : null;
+    return null;
+  };
+  const progressionData = [...sorted]
+    .sort((a, b) => new Date(a.session_date || a.created_date) - new Date(b.session_date || b.created_date))
+    .map((g, i) => ({
+      idx: i + 1,
+      date: moment(g.session_date || g.created_date).format('MMM DD'),
+      game: (g.game_id || '').replace(/-/g, ' '),
+      score: g.score || 0,
+      accuracy: sessionAccuracy(g),
+    }));
 
   return (
     <Card>
@@ -94,6 +123,11 @@ export default function GameSessionList({ gameSessions }) {
               <p className="text-xs text-muted-foreground">Best Accuracy</p>
               <p className="text-lg font-bold text-cyan-600">{Math.round(bestAccuracy * 100)}%</p>
             </div>
+          ) : hasOrbital ? (
+            <div className="text-center p-3 rounded-lg bg-indigo-50">
+              <p className="text-xs text-muted-foreground">Best Chain</p>
+              <p className="text-lg font-bold text-indigo-600">{bestChain}</p>
+            </div>
           ) : (
             <div className="text-center p-3 rounded-lg bg-green-50">
               <p className="text-xs text-muted-foreground">Bricks Broken</p>
@@ -102,11 +136,35 @@ export default function GameSessionList({ gameSessions }) {
           )}
         </div>
 
+        {/* Progression trend */}
+        {progressionData.length >= 2 && (
+          <div className="mb-4 p-3 rounded-lg border border-border bg-muted/20">
+            <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" /> Progression Across Sessions
+            </p>
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={progressionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 15% 90%)" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(240 10% 45%)' }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="score" tick={{ fontSize: 11, fill: 'hsl(240 10% 45%)' }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="acc" orientation="right" domain={[0, 1]} tick={{ fontSize: 11, fill: 'hsl(240 10% 45%)' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v * 100)}%`} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(210 15% 90%)', fontSize: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line yAxisId="score" type="monotone" dataKey="score" name="Score" stroke="hsl(168 65% 30%)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line yAxisId="acc" type="monotone" dataKey="accuracy" name="Accuracy" stroke="hsl(200 70% 50%)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
         {/* Session list */}
         <div className="space-y-3">
           {sorted.map(g => {
             if (g.game_id === 'catch-me-if-you-can') {
               return <CatchMeSessionCard key={g.id} g={g} />;
+            }
+            if (g.game_id === 'orbital-order') {
+              return <OrbitalOrderSessionCard key={g.id} g={g} />;
             }
             const m = g.metrics || {};
             const specials = m.special_bricks_triggered || {};
