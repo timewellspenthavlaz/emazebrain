@@ -28,23 +28,27 @@ export default function Games() {
   const [editing, setEditing] = useState(null);
   const [previewItem, setPreviewItem] = useState(null);
   const [mediaItem, setMediaItem] = useState(null);
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
-      const [content, t, r, s, d] = await Promise.all([
+      const [content, t, r, s, d, p] = await Promise.all([
         base44.entities.ContentItem.list(),
         base44.entities.Therapist.list(),
         base44.entities.BrainRegion.list(),
         base44.entities.FunctionalSkill.list(),
-        base44.entities.Diagnosis.list()
+        base44.entities.Diagnosis.list(),
+        base44.entities.Patient.list()
       ]);
       setItems(content.filter(c => c.type === 'game'));
       setTherapists(t);
       setBrainRegions(r);
       setSkills(s);
       setDiagnoses(d);
+      setPatients(p);
     } catch {
       toast({ title: 'Error loading games', variant: 'destructive' });
     } finally { setLoading(false); }
@@ -68,6 +72,14 @@ export default function Games() {
   });
 
   const namesFor = (ids, source, field) => (ids || []).map(id => source.find(x => x.id === id)?.[field]).filter(Boolean);
+
+  const playHref = (base) => (selectedPatient ? `${base}&patientId=${selectedPatient}` : base);
+  const guardPlay = (e) => {
+    if (!selectedPatient) {
+      e.preventDefault();
+      toast({ title: 'Select a patient first', description: 'Choose a patient from the dropdown before playing so the session is recorded on their profile.', variant: 'destructive' });
+    }
+  };
 
   const renderTags = (item) => {
     const regions = namesFor(item.brain_region_ids, brainRegions, 'name');
@@ -108,6 +120,12 @@ export default function Games() {
       </PageHeader>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
+        <Select value={selectedPatient} onValueChange={setSelectedPatient}>
+          <SelectTrigger className="w-[240px] bg-card"><SelectValue placeholder="Select patient for session" /></SelectTrigger>
+          <SelectContent>
+            {patients.map(p => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search games..." className="pl-9 bg-card" />
@@ -190,17 +208,17 @@ export default function Games() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         {item.title?.toLowerCase().includes('block crasher') && item.background_url && (
-                          <a href={`/block-crasher?level=1&bg=${encodeURIComponent(item.background_url)}`}>
+                          <a href={playHref(`/block-crasher?level=1&bg=${encodeURIComponent(item.background_url)}`)} onClick={guardPlay}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
                         {item.title?.toLowerCase().includes('catch me') && (
-                          <a href="/catch-me-if-you-can?level=2&br=left&orientation=right">
+                          <a href={playHref('/catch-me-if-you-can?level=2&br=left&orientation=right')} onClick={guardPlay}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-cyan-600" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
                         {item.title?.toLowerCase().includes('orbital') && (
-                          <a href="/orbital-order?difficulty_level=3&br=left&neon=0&bg=dark">
+                          <a href={playHref('/orbital-order?difficulty_level=3&br=left&neon=0&bg=dark')} onClick={guardPlay}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-500" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
