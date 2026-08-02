@@ -74,7 +74,7 @@ export function parseParams(searchParams) {
     rule_visible: get('rule_visible', 'onrequest') === 'always' ? 'always' : 'onrequest',
     glyphType: get('glyphType', 'DIGITS') === 'LETTERS' ? 'LETTERS' : 'DIGITS',
     reduce_motion: num('reduce_motion', 0) === 1,
-    patientId: get('patientId', ''),
+    patientId: get('patient_id', '') || get('patientId', ''),
     callbackUrl: get('callbackUrl', ''),
     lang: get('lang', 'en'),
   };
