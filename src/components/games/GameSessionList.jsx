@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/admin/StatusBadge';
 import CatchMeSessionCard from '@/components/games/CatchMeSessionCard';
 import OrbitalOrderSessionCard from '@/components/games/OrbitalOrderSessionCard';
+import BeepBeepSessionCard from '@/components/games/BeepBeepSessionCard';
 import moment from 'moment';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -63,6 +64,7 @@ export default function GameSessionList({ gameSessions }) {
   const hasCatchMe = sorted.some(g => g.game_id === 'catch-me-if-you-can');
   const hasBlockCrasher = sorted.some(g => g.game_id === 'block-crasher');
   const hasOrbital = sorted.some(g => g.game_id === 'orbital-order');
+  const hasBeep = sorted.some(g => g.game_id === 'beep-beep');
   const bestAccuracy = Math.max(
     0,
     ...sorted
@@ -75,13 +77,21 @@ export default function GameSessionList({ gameSessions }) {
       .filter(g => g.game_id === 'orbital-order')
       .map(g => g.metrics?.summary?.maxChain || 0)
   );
-  // Level cap depends on which game types are present (orbital max = 5, catch-me max = 9, block-crasher max = 10)
-  const levelCap = hasOrbital && !hasCatchMe && !hasBlockCrasher ? 5
+  const bestPlanningEff = Math.max(
+    0,
+    ...sorted
+      .filter(g => g.game_id === 'beep-beep')
+      .map(g => g.metrics?.planning_efficiency || 0)
+  );
+  // Level cap depends on which game types are present (beep-beep max = 50, orbital max = 5, catch-me max = 9, block-crasher max = 10)
+  const levelCap = hasBeep ? 50
+    : hasOrbital && !hasCatchMe && !hasBlockCrasher ? 5
     : hasCatchMe && !hasBlockCrasher ? 9 : 10;
 
   // Progression trend — score & accuracy across sessions (oldest → newest)
   const sessionAccuracy = (g) => {
     if (g.game_id === 'orbital-order') return g.metrics?.summary?.accuracy ?? null;
+    if (g.game_id === 'beep-beep') return g.metrics?.planning_efficiency ?? null;
     if (g.game_id === 'catch-me-if-you-can') return g.metrics?.accuracy_rate ?? null;
     if (g.game_id === 'block-crasher') return g.metrics?.paddle_miss_rate != null ? 1 - g.metrics.paddle_miss_rate : null;
     return null;
@@ -128,6 +138,11 @@ export default function GameSessionList({ gameSessions }) {
               <p className="text-xs text-muted-foreground">Best Chain</p>
               <p className="text-lg font-bold text-indigo-600">{bestChain}</p>
             </div>
+          ) : hasBeep ? (
+            <div className="text-center p-3 rounded-lg bg-rose-50">
+              <p className="text-xs text-muted-foreground">Planning Eff.</p>
+              <p className="text-lg font-bold text-rose-600">{Math.round(bestPlanningEff * 100)}%</p>
+            </div>
           ) : (
             <div className="text-center p-3 rounded-lg bg-green-50">
               <p className="text-xs text-muted-foreground">Bricks Broken</p>
@@ -165,6 +180,9 @@ export default function GameSessionList({ gameSessions }) {
             }
             if (g.game_id === 'orbital-order') {
               return <OrbitalOrderSessionCard key={g.id} g={g} />;
+            }
+            if (g.game_id === 'beep-beep') {
+              return <BeepBeepSessionCard key={g.id} g={g} />;
             }
             const m = g.metrics || {};
             const specials = m.special_bricks_triggered || {};
