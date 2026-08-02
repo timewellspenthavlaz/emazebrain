@@ -13,8 +13,6 @@ import {
 } from '@/lib/beepBeep/engine';
 import { BeepBeepMetrics } from '@/lib/beepBeep/metrics';
 
-const VEHICLE_PALETTE = ['#4F8BF5', '#34D17C', '#F4C20D', '#9B6BF2', '#E14C8F', '#2BB6A3', '#06B6D4', '#6366F1', '#84CC16', '#14B8A6', '#F97316', '#A855F7'];
-
 function fireConfetti() {
   confetti({ particleCount: 80, spread: 70, origin: { y: 0.5, x: 0.5 }, colors: ['#22C55E', '#48D1CC', '#4D96FF', '#F2C14E'], ticks: 220 });
 }
@@ -413,7 +411,7 @@ export default function BeepBeep() {
     let pi = 0;
     board.pieces.forEach((p) => {
       if (p.isTarget) map[p.id] = null;
-      else { map[p.id] = VEHICLE_PALETTE[pi % VEHICLE_PALETTE.length]; pi++; }
+      else { map[p.id] = pi % 3; pi++; } // blocker car variant index (0..2)
     });
     return map;
   }, [board]);

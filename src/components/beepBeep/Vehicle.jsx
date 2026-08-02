@@ -136,7 +136,7 @@ export default function Vehicle({
           outlineOffset: '2px',
         }}
       >
-        <CarShape length={piece.len} horiz={piece.horiz} color={palette} isAmbulance={isTarget} />
+        <CarShape length={piece.len} horiz={piece.horiz} variant={palette} isTarget={isTarget} />
         {/* hint ghost destination */}
         {hintTarget != null && hintTarget !== v && (
           <div style={{
