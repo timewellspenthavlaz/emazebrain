@@ -2,6 +2,30 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Sphere from './Sphere';
 
+// Build a randomized, repeating texture tile of scattered shapes so the
+// "textured" bg modes (coldt / warmt) read clearly without being noisy.
+function useTextureTile(chrome) {
+  return useMemo(() => {
+    const TILE = 150;
+    const rng = (seed) => {
+      let s = seed;
+      return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    };
+    const rand = rng(Math.floor(Math.random() * 100000));
+    const shapes = [];
+    const shapeCount = 7;
+    for (let i = 0; i < shapeCount; i++) {
+      const kind = Math.floor(rand() * 4); // 0 circle, 1 cross, 2 square, 3 triangle
+      const x = 10 + rand() * (TILE - 20);
+      const y = 10 + rand() * (TILE - 20);
+      const size = 6 + rand() * 12;
+      const opacity = 0.06 + rand() * 0.12;
+      shapes.push({ kind, x, y, size, opacity });
+    }
+    return { TILE, shapes, chrome };
+  }, [chrome]);
+}
+
 /**
  * Play field — places spheres in jittered vertical bands and renders the chain
  * trail. Spheres drift gently within their cell (±12% of cell radius) unless
@@ -40,18 +64,41 @@ export default function PlayField({
     if (a && b) trail.push({ a, b });
   }
 
+  const texture = useTextureTile(chrome);
+
   return (
     <div className="absolute inset-0">
-      {field.grid && (
-        <svg className="absolute inset-0 w-full h-full opacity-20" style={{ pointerEvents: 'none' }}>
-          <defs>
-            <pattern id="oo-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-              <path d="M 48 0 L 0 0 0 48" fill="none" stroke={chrome} strokeWidth="0.5" opacity="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#oo-grid)" />
-        </svg>
-      )}
+      {field.grid && (() => {
+        const { TILE, shapes } = texture;
+        return (
+          <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: 'none' }}>
+            <defs>
+              <pattern id="oo-texture" width={TILE} height={TILE} patternUnits="userSpaceOnUse">
+                {shapes.map((sh, i) => {
+                  const common = { key: i, stroke: chrome, fill: 'none', strokeWidth: 1.5, opacity: sh.opacity };
+                  if (sh.kind === 0) return <circle {...common} cx={sh.x} cy={sh.y} r={sh.size / 2} />;
+                  if (sh.kind === 1) {
+                    const h = sh.size / 2;
+                    return (
+                      <g key={i} stroke={chrome} strokeWidth={1.5} opacity={sh.opacity}>
+                        <line x1={sh.x - h} y1={sh.y} x2={sh.x + h} y2={sh.y} />
+                        <line x1={sh.x} y1={sh.y - h} x2={sh.x} y2={sh.y + h} />
+                      </g>
+                    );
+                  }
+                  if (sh.kind === 2) return <rect {...common} x={sh.x - sh.size / 2} y={sh.y - sh.size / 2} width={sh.size} height={sh.size} />;
+                  const h = sh.size / 2;
+                  return (
+                    <polygon key={i} stroke={chrome} fill="none" strokeWidth={1.5} opacity={sh.opacity}
+                      points={`${sh.x},${sh.y - h} ${sh.x + h},${sh.y + h} ${sh.x - h},${sh.y + h}`} />
+                  );
+                })}
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#oo-texture)" />
+          </svg>
+        );
+      })()}
 
       {/* Chain trail */}
       <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: 'none', zIndex: 5 }}>
