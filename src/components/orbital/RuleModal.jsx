@@ -7,7 +7,7 @@ import { tokenFill, relLuminance } from '@/lib/orbitalOrder/config';
 function ColorDot({ token, neon, chrome }) {
   const fill = tokenFill(token, neon);
   return (
-    <svg width={22} height={22} viewBox="-12 -12 24 24" className="shrink-0">
+    <svg width={44} height={44} viewBox="-12 -12 24 24" className="shrink-0">
       <circle r={9} fill={fill} stroke={chrome} strokeWidth={1.5} />
     </svg>
   );
