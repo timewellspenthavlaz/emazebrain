@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RotateCcw, Eye, Activity, Timer, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Activity, Timer, CheckCircle2, XCircle } from 'lucide-react';
 import Hud from '@/components/orbital/Hud';
 import RuleModal from '@/components/orbital/RuleModal';
 import PlayField from '@/components/orbital/PlayField';
@@ -103,6 +103,8 @@ export default function OrbitalOrder() {
   useEffect(() => {
     metricsRef.current = new OrbitalMetrics({ ...cfg, neon });
     metricsRef.current.startSession();
+    startSegment('rules');
+    setStarted(true);
     return () => {
       if (metricsRef.current && !sentRef.current && segmentRef.current !== 'summary') {
         sentRef.current = true;
@@ -467,32 +469,6 @@ export default function OrbitalOrder() {
     }, 3000);
   }
 
-  // ---- start gate (overlay, so the field stays mounted for measuring) ----
-  const beginOverlay = !started && (
-    <div className="absolute inset-0 z-40 flex items-center justify-center px-6" style={{ background: bg.fieldHex, color: chrome }}>
-      <div className="text-center max-w-md">
-        <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center"
-          style={{ background: `radial-gradient(circle at 35% 30%, #4D8FE6, #1d4ed8)` }}>
-          <Eye className="w-8 h-8 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Orbital Order</h2>
-        <p className="text-sm opacity-70 mb-6">
-          Tap the spheres in ascending or descending order — but skip the "skip" colour. Wrong taps and timeouts cost a life. Complete chains for bonus points.
-        </p>
-        <div className="text-xs opacity-60 mb-6 space-y-1">
-          <p>Brain region: {cfg.br} ({cfg.br === 'left' ? '2D disc' : '2D disc*'}) · Difficulty {cfg.difficulty_level} · Neon {neon ? 'on' : 'off'}</p>
-          <p>Background {cfg.bg} · Rule visible: {cfg.rule_visible}</p>
-          {cfg.time_to_play > 0 && <p>Time budget: {cfg.time_to_play}s</p>}
-          <p>Lives: {STARTING_LIVES} · +{SCORE_PER_TAP}/tap · +{CHAIN_BONUS}/chain</p>
-          {!cfg.patientId && <p className="text-amber-400 font-semibold">Demo mode — session not recorded</p>}
-        </div>
-        <Button onClick={() => { setStarted(true); startSegment('practice'); }} style={{ background: '#0EA5A4', color: '#fff' }}>
-          Begin Session
-        </Button>
-      </div>
-    </div>
-  );
-
   // ---- summary ----
   if (segment === 'summary' && summary) {
     return (
@@ -547,7 +523,6 @@ export default function OrbitalOrder() {
       {/* Play field */}
       <div ref={fieldRef} className="relative flex-1 w-full min-h-0"
         onClick={() => { if (started && phaseRef.current === 'reveal' && REVEAL_SKIP) startResponse(); }}>
-        {beginOverlay}
         {started && fieldSize.width > 0 && spheres.length > 0 && (
           <PlayField
             spheres={spheres} committed={committed} dim={phase === 'reveal'}
