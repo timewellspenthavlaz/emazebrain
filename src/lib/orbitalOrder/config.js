@@ -110,23 +110,54 @@ export function glyphColor() {
   return '#0A0C12'; // dark glyph on every fill — contrast re-asserted, not assumed
 }
 
-// Resolve the bg token (or arbitrary hex) to a concrete field colour. neon=1 on
-// a light-resolved background falls back to neon=0 (acceptance §11).
+// Dark cold palette — deep blues / teals / greens.
+const COLD_PALETTE = [
+  '#0A2E4F', '#0E3A5C', '#0F4C5C', '#16324A',
+  '#0C3B4F', '#1A4A6E', '#0E2F3D', '#143A4A',
+];
+// Dark warm palette — deep reds / ambers / maroons.
+const WARM_PALETTE = [
+  '#3D1A1A', '#4A1F2E', '#5C2A0E', '#4E1E1E',
+  '#5A2E1A', '#4A2A0E', '#3E1A2A', '#52200E',
+];
+
+function randPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Resolve the bg token to a concrete field colour. Supports six named modes
+// (colds / warms / coldt / warmt / coldg / warmg) plus the legacy keywords
+// (dark / light / grid) and an arbitrary hex.
+// Returns { fieldHex (representative, for luminance), fieldCss (CSS background),
+//           grid, neon, warning }.
 export function resolveBg(bg, neon) {
   let fieldHex;
+  let fieldCss = null;
   let grid = false;
   let neonEffective = neon;
   let warning = null;
 
-  if (bg === 'dark') fieldHex = neon ? '#040509' : '#0A0C12';
+  if (bg === 'colds') { fieldHex = randPick(COLD_PALETTE); }
+  else if (bg === 'warms') { fieldHex = randPick(WARM_PALETTE); }
+  else if (bg === 'coldt') { fieldHex = randPick(COLD_PALETTE); grid = true; }
+  else if (bg === 'warmt') { fieldHex = randPick(WARM_PALETTE); grid = true; }
+  else if (bg === 'coldg') {
+    const a = randPick(COLD_PALETTE); const b = randPick(COLD_PALETTE);
+    fieldHex = a; fieldCss = `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
+  } else if (bg === 'warmg') {
+    const a = randPick(WARM_PALETTE); const b = randPick(WARM_PALETTE);
+    fieldHex = a; fieldCss = `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
+  }
+  else if (bg === 'dark') { fieldHex = neon ? '#040509' : '#0A0C12'; }
   else if (bg === 'light') { fieldHex = '#F8F9FB'; if (neon) { neonEffective = 0; warning = 'NEON_DISABLED_ON_LIGHT_BG'; } }
   else if (bg === 'grid') { fieldHex = neon ? '#040509' : '#0A0C12'; grid = true; }
   else if (/^#?[0-9a-fA-F]{6}$/.test(bg)) {
     fieldHex = bg.startsWith('#') ? bg : '#' + bg;
     if (neon && relLuminance(fieldHex) > 140) { neonEffective = 0; warning = 'NEON_DISABLED_ON_LIGHT_BG'; }
-  } else fieldHex = neon ? '#040509' : '#0A0C12';
+  } else { fieldHex = neon ? '#040509' : '#0A0C12'; }
 
-  return { fieldHex, grid, neon: neonEffective, warning };
+  if (!fieldCss) fieldCss = fieldHex;
+  return { fieldHex, fieldCss, grid, neon: neonEffective, warning };
 }
 
 export function tokenFill(tokenName, neon) {

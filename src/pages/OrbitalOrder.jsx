@@ -23,7 +23,7 @@ export default function OrbitalOrder() {
   const cfg = useRef(parseParams(searchParams)).current;
   const bg = useRef(resolveBg(cfg.bg, cfg.neon)).current;
   const neon = bg.neon;
-  const chrome = chromeColor(bg.fieldHex);
+  const chrome = chromeColor(bg.fieldHex);  // fieldHex = representative solid for luminance; bg.fieldCss holds the actual CSS background
   const pool = useRef(sessionPool(cfg.difficulty_level)).current;
 
   // ---- render state ----
@@ -472,7 +472,7 @@ export default function OrbitalOrder() {
   // ---- summary ----
   if (segment === 'summary' && summary) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 py-10" style={{ background: bg.fieldHex, color: chrome }}>
+      <div className="min-h-screen flex items-center justify-center px-6 py-10" style={{ background: bg.fieldCss, color: chrome }}>
         <div className="max-w-lg w-full rounded-2xl p-8" style={{ background: 'rgba(20,22,28,0.7)', border: `1px solid ${chrome}22`, backdropFilter: 'blur(14px)' }}>
           <div className="flex items-center gap-3 mb-5">
             <Activity className="w-7 h-7" style={{ color: '#0EA5A4' }} />
@@ -519,7 +519,7 @@ export default function OrbitalOrder() {
   const countdownData = cfg.countdown_timer > 0 ? { remaining: countdown, total: cfg.countdown_timer } : null;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: bg.fieldHex, color: chrome }}>
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: bg.fieldCss, color: chrome }}>
       {/* Play field */}
       <div ref={fieldRef} className="relative flex-1 w-full min-h-0"
         onClick={() => { if (started && phaseRef.current === 'reveal' && REVEAL_SKIP) startResponse(); }}>
