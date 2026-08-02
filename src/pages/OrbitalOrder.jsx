@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RotateCcw, Activity, Timer, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Activity, CheckCircle2, XCircle } from 'lucide-react';
 import Hud from '@/components/orbital/Hud';
+import CountdownTimer from '@/components/games/CountdownTimer';
 import RuleModal from '@/components/orbital/RuleModal';
 import PlayField from '@/components/orbital/PlayField';
 import { OrbitalMetrics } from '@/lib/orbitalOrder/metrics';
@@ -569,11 +570,9 @@ export default function OrbitalOrder() {
           </div>
         )}
 
-        {/* Time-left chip (global) */}
+        {/* Global time-to-play counter (matches the other two games) */}
         {cfg.time_to_play > 0 && (
-          <div className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 text-xs opacity-70" style={{ color: chrome }}>
-            <Timer className="w-4 h-4" /> {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-          </div>
+          <CountdownTimer type={cfg.br} timeLeft={timeLeft} totalTime={cfg.time_to_play} />
         )}
       </div>
     </div>
