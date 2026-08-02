@@ -3,6 +3,8 @@
  * All visuals are generated in code; no bitmap assets.
  */
 
+import { pickTexture } from './textures';
+
 export const GAME_ID = 'orbital-order';
 export const VERSION = '1.0.0';
 
@@ -129,18 +131,20 @@ function randPick(arr) {
 // (colds / warms / coldt / warmt / coldg / warmg) plus the legacy keywords
 // (dark / light / grid) and an arbitrary hex.
 // Returns { fieldHex (representative, for luminance), fieldCss (CSS background),
-//           grid, neon, warning }.
+//           grid, texture, neon, warning }. `texture` carries the precomputed
+//           pattern SVG (coldt / warmt) picked randomly at launch.
 export function resolveBg(bg, neon) {
   let fieldHex;
   let fieldCss = null;
   let grid = false;
+  let texture = null;
   let neonEffective = neon;
   let warning = null;
 
   if (bg === 'colds') { fieldHex = randPick(COLD_PALETTE); }
   else if (bg === 'warms') { fieldHex = randPick(WARM_PALETTE); }
-  else if (bg === 'coldt') { fieldHex = randPick(COLD_PALETTE); grid = true; }
-  else if (bg === 'warmt') { fieldHex = randPick(WARM_PALETTE); grid = true; }
+  else if (bg === 'coldt') { fieldHex = randPick(COLD_PALETTE); texture = pickTexture('cold'); }
+  else if (bg === 'warmt') { fieldHex = randPick(WARM_PALETTE); texture = pickTexture('warm'); }
   else if (bg === 'coldg') {
     const a = randPick(COLD_PALETTE); const b = randPick(COLD_PALETTE);
     fieldHex = a; fieldCss = `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
@@ -157,7 +161,7 @@ export function resolveBg(bg, neon) {
   } else { fieldHex = neon ? '#040509' : '#0A0C12'; }
 
   if (!fieldCss) fieldCss = fieldHex;
-  return { fieldHex, fieldCss, grid, neon: neonEffective, warning };
+  return { fieldHex, fieldCss, grid, texture, neon: neonEffective, warning };
 }
 
 export function tokenFill(tokenName, neon) {
