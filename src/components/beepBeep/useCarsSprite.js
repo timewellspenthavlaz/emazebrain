@@ -71,6 +71,7 @@ function buildSprite() {
       const symL = document.createElementNS(svgNS, 'symbol');
       symL.setAttribute('id', `bb-car-${i}`);
       symL.setAttribute('viewBox', `${bx} ${by} ${bw} ${bh}`);
+      symL.setAttribute('preserveAspectRatio', 'none');
       symL.appendChild(cloneL);
       sprite.appendChild(symL);
 
@@ -78,6 +79,7 @@ function buildSprite() {
       const symP = document.createElementNS(svgNS, 'symbol');
       symP.setAttribute('id', `bb-car-${i}-v`);
       symP.setAttribute('viewBox', `0 0 ${bh} ${bw}`);
+      symP.setAttribute('preserveAspectRatio', 'none');
       const outer = document.createElementNS(svgNS, 'g');
       outer.setAttribute('transform', `translate(0 ${bw}) rotate(-90)`);
       const inner = document.createElementNS(svgNS, 'g');

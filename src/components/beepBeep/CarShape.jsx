@@ -12,7 +12,7 @@ import { useCarsSprite, TARGET_VARIANT } from './useCarsSprite';
  * (green w/ red accents); blockers cycle through the remaining three.
  * While the sprite loads we show a soft placeholder silhouette.
  */
-export default function CarShape({ length = 2, horiz, variant, isTarget }) {
+export default function CarShape({ length = 2, horiz, isTarget }) {
   const ready = useCarsSprite();
   const L = Math.max(1, length) * 100;
   const vb = horiz ? `0 0 ${L} 100` : `0 0 100 ${L}`;
@@ -26,14 +26,14 @@ export default function CarShape({ length = 2, horiz, variant, isTarget }) {
     );
   }
 
-  const v = Number.isFinite(variant) ? variant : 0;
-  const idx = isTarget ? TARGET_VARIANT : v % TARGET_VARIANT; // blockers cycle 0..2
+  // Single car for every piece — stretched to fill its rectangle.
+  const idx = TARGET_VARIANT;
   const href = `#bb-car-${idx}${horiz ? '' : '-v'}`;
 
   return (
-    <svg viewBox={vb} preserveAspectRatio="xMidYMid meet"
+    <svg viewBox={vb} preserveAspectRatio="none"
       width="100%" height="100%" style={{ display: 'block', overflow: 'visible' }}>
-      <use href={href} />
+      <use href={href} width="100%" height="100%" />
     </svg>
   );
 }
