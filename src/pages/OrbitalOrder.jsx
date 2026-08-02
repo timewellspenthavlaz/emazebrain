@@ -187,8 +187,7 @@ export default function OrbitalOrder() {
   }, [trialNonce, fieldSize.width]);
 
   function pickGlyphType() {
-    if (segmentRef.current === 'practice' || segmentRef.current === 'motor') return cfg.glyphType;
-    return Math.random() < 0.5 ? 'DIGITS' : 'LETTERS';
+    return cfg.glyphType;
   }
 
   function setupTrial() {
