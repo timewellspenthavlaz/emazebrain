@@ -539,6 +539,7 @@ export default function OrbitalOrder() {
           segmentLabel={segmentLabel}
           lives={{ current: lives, total: STARTING_LIVES }}
           score={score}
+          br={cfg.br}
         />
 
         {started && segment !== 'summary' && segment !== 'motor' && (

@@ -30,11 +30,16 @@ function ProgressArc({ done, total, countdown }) {
  * Rule display is handled by the RuleModal (central card + corner "?" pill).
  * All chrome is achromatic; the eight hues are reserved for sphere tokens.
  */
-export default function Hud({ progress, countdown, demo, chrome, segmentLabel, lives, score }) {
+export default function Hud({ progress, countdown, demo, chrome, segmentLabel, lives, score, br }) {
   const totalLives = lives?.total || 3;
   const currentLives = lives?.current ?? 0;
+  // Timer lives on the right when br=left (warm digital), on the left when br=right (cold bar).
+  // Push the HUD cluster to the opposite side so they never overlap regardless of digit count.
+  const timerOnRight = br !== 'right';
   return (
-    <div className="absolute top-0 left-0 right-0 z-30 flex items-start justify-end gap-3 px-4 pt-4 pointer-events-none">
+    <div
+      className={`absolute top-0 left-0 right-0 z-30 flex items-start gap-3 px-4 pt-4 pointer-events-none ${timerOnRight ? 'justify-start' : 'justify-end'}`}
+    >
       <div className="pointer-events-auto flex items-center gap-3">
         {demo && (
           <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md"
