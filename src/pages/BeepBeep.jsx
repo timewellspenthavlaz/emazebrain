@@ -13,7 +13,7 @@ import {
 } from '@/lib/beepBeep/engine';
 import { BeepBeepMetrics } from '@/lib/beepBeep/metrics';
 
-const VEHICLE_PALETTE = ['#C9C2B6', '#B8B0A4', '#A9A39A', '#9C968D', '#CFC8BB', '#B3AEA6', '#918B82', '#D8D2C5', '#A8A29A', '#8C8780', '#BEB7AB', '#7E7A73'];
+const VEHICLE_PALETTE = ['#4F8BF5', '#34D17C', '#F4C20D', '#9B6BF2', '#E14C8F', '#2BB6A3', '#06B6D4', '#6366F1', '#84CC16', '#14B8A6', '#F97316', '#A855F7'];
 
 function fireConfetti() {
   confetti({ particleCount: 80, spread: 70, origin: { y: 0.5, x: 0.5 }, colors: ['#22C55E', '#48D1CC', '#4D96FF', '#F2C14E'], ticks: 220 });

@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import CarShape from './CarShape';
 
 
 /**
@@ -111,9 +112,7 @@ export default function Vehicle({
     if (Math.abs(d.axisDelta) > 0.4) onBlockedDrag();
   }
 
-  const fill = isTarget ? '#E0503A' : palette;
-  const stroke = isTarget ? '#FFFFFF' : 'rgba(255,255,255,0.18)';
-  const shadow = '0 3px 8px rgba(0,0,0,0.35)';
+  const shadow = '0 4px 10px rgba(0,0,0,0.4)';
 
   return (
     <motion.div
@@ -127,31 +126,24 @@ export default function Vehicle({
         onPointerUp={onPointerUp}
         onPointerCancel={() => { dragRef.current = null; setDragV(null); setDragging(false); }}
         style={{
-          position: 'absolute', inset: 2, borderRadius: Math.max(4, cell * 0.12),
-          background: fill, boxShadow: shadow,
+          position: 'absolute', inset: 0, borderRadius: Math.max(4, cell * 0.14),
+          boxShadow: shadow,
           border: isTarget
-            ? `2px solid ${stroke}${pulse ? '' : '88'}`
-            : `1px solid ${stroke}`,
+            ? `2px solid #FFFFFF${pulse ? '' : '66'}`
+            : 'none',
           touchAction: 'none', cursor: 'grab',
           outline: highlight ? '2px solid #5EEAD4' : 'none',
           outlineOffset: '2px',
         }}
       >
-        {/* roof star on target */}
-        {isTarget && (
-          <svg viewBox="0 0 24 24" style={{ position: 'absolute', inset: 0, margin: 'auto', width: '52%', height: '52%', opacity: 0.95 }}>
-            <path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.2 20.9l1.6-6.8L1.6 8.9l6.9-.6z" fill="#fff" />
-          </svg>
-        )}
-        {/* windscreen hint */}
-        <div style={{ position: 'absolute', top: '15%', left: '12%', right: '12%', height: '24%', borderRadius: '3px', background: 'rgba(255,255,255,0.22)' }} />
+        <CarShape length={piece.len} horiz={piece.horiz} color={palette} isAmbulance={isTarget} />
         {/* hint ghost destination */}
         {hintTarget != null && hintTarget !== v && (
           <div style={{
             position: 'absolute', borderRadius: Math.max(4, cell * 0.12),
             left: horiz ? (hintTarget - v) * cell - 2 : -2,
             top: horiz ? -2 : (hintTarget - v) * cell - 2,
-            width: width - 0, height: height - 0,
+            width, height,
             border: '2px dashed #5EEAD4', background: 'rgba(94,234,212,0.12)', pointerEvents: 'none',
           }} />
         )}
