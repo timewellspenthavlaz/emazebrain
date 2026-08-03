@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import Board from '@/components/beepBeep/Board';
 import Hud from '@/components/beepBeep/Hud';
 import Results from '@/components/beepBeep/Results';
+import { TARGET_INDEX, BLOCKER_INDICES } from '@/components/beepBeep/useCarsSprite';
 import { parseParams, gridBand, budget, computeAward, findReplacement } from '@/lib/beepBeep/config';
 import { resolveBg } from '@/lib/beepBeep/colors';
 import { loadLevels, pickBoard } from '@/lib/beepBeep/levels';
@@ -410,8 +411,8 @@ export default function BeepBeep() {
     const map = {};
     let pi = 0;
     board.pieces.forEach((p) => {
-      if (p.isTarget) map[p.id] = null;
-      else { map[p.id] = pi % 3; pi++; } // blocker car variant index (0..2)
+      if (p.isTarget) map[p.id] = TARGET_INDEX;
+      else { map[p.id] = BLOCKER_INDICES[pi % BLOCKER_INDICES.length]; pi++; }
     });
     return map;
   }, [board]);

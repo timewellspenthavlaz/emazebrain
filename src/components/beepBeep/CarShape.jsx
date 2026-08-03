@@ -1,18 +1,14 @@
 import React from 'react';
-import { useCarsSprite, TARGET_VARIANT } from './useCarsSprite';
+import { useCarsSprite, TARGET_INDEX } from './useCarsSprite';
 
 /**
- * CarShape — renders one of the 3D cars from the shared SVG sprite.
- * The sprite provides a landscape and a pre-rotated portrait symbol per
- * car; we pick the one matching the piece's orientation and size the svg
- * viewBox to the piece (length × 1 cell) so the artwork fills the slot's
- * short side and extends along its length, undistorted and centered.
- *
- * The rescue / target piece always uses the dedicated target car
- * (green w/ red accents); blockers cycle through the remaining three.
- * While the sprite loads we show a soft placeholder silhouette.
+ * CarShape — renders one car from the shared SVG sprite, stretched to fill
+ * its rectangle (preserveAspectRatio none). The sprite provides a landscape
+ * and a pre-rotated portrait symbol per car; we pick the one matching the
+ * piece's orientation. `variant` is the resolved car index (0..11); the
+ * target piece uses TARGET_INDEX. A soft placeholder shows while loading.
  */
-export default function CarShape({ length = 2, horiz, isTarget }) {
+export default function CarShape({ length = 2, horiz, isTarget, variant }) {
   const ready = useCarsSprite();
   const L = Math.max(1, length) * 100;
   const vb = horiz ? `0 0 ${L} 100` : `0 0 100 ${L}`;
@@ -26,8 +22,7 @@ export default function CarShape({ length = 2, horiz, isTarget }) {
     );
   }
 
-  // Single car for every piece — stretched to fill its rectangle.
-  const idx = TARGET_VARIANT;
+  const idx = Number.isFinite(variant) ? variant : TARGET_INDEX;
   const href = `#bb-car-${idx}${horiz ? '' : '-v'}`;
 
   return (
