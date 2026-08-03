@@ -66,30 +66,27 @@ function buildSprite() {
       const pad = Math.max(bw, bh) * 0.04 || 8;
       bx -= pad; by -= pad; bw += pad * 2; bh += pad * 2;
 
-      // landscape symbol — viewBox crops to the car's bbox in 800-space.
+      // landscape symbol — car rotated 90° CW, viewBox 0 0 bh bw.
       const symL = document.createElementNS(svgNS, 'symbol');
       symL.setAttribute('id', `bb-car-${i}`);
-      symL.setAttribute('viewBox', `${bx} ${by} ${bw} ${bh}`);
+      symL.setAttribute('viewBox', `0 0 ${bh} ${bw}`);
       symL.setAttribute('preserveAspectRatio', 'none');
+      const wrapL = document.createElementNS(svgNS, 'g');
+      wrapL.setAttribute('transform', `translate(${bh} 0) rotate(90) translate(${-bx} ${-by})`);
       const useL = document.createElementNS(svgNS, 'use');
       useL.setAttribute('href', `#${id}`);
-      symL.appendChild(useL);
+      wrapL.appendChild(useL);
+      symL.appendChild(wrapL);
       sprite.appendChild(symL);
 
-      // portrait symbol — same car rotated -90, viewBox 0 0 bh bw.
+      // portrait symbol — natural orientation, viewBox crops to bbox.
       const symP = document.createElementNS(svgNS, 'symbol');
       symP.setAttribute('id', `bb-car-${i}-v`);
-      symP.setAttribute('viewBox', `0 0 ${bh} ${bw}`);
+      symP.setAttribute('viewBox', `${bx} ${by} ${bw} ${bh}`);
       symP.setAttribute('preserveAspectRatio', 'none');
-      const outer = document.createElementNS(svgNS, 'g');
-      outer.setAttribute('transform', `translate(0 ${bw}) rotate(-90)`);
-      const inner = document.createElementNS(svgNS, 'g');
-      inner.setAttribute('transform', `translate(${-bx} ${-by})`);
       const useP = document.createElementNS(svgNS, 'use');
       useP.setAttribute('href', `#${id}`);
-      inner.appendChild(useP);
-      outer.appendChild(inner);
-      symP.appendChild(outer);
+      symP.appendChild(useP);
       sprite.appendChild(symP);
     });
 
