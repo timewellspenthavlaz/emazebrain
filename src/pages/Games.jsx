@@ -227,6 +227,11 @@ export default function Games() {
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
+                        {item.title?.toLowerCase().includes('echo') && (
+                          <a href={playHref('/echo-keys?br=right&obstacle=true')} onClick={guardPlay}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-cyan-600" title="Play Game"><Play className="w-4 h-4" /></Button>
+                          </a>
+                        )}
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Quick Preview"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleStatus(item)}>
