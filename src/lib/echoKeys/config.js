@@ -32,6 +32,14 @@ const BALL_LINE =
 const BALL_REPLACEMENT =
   "var contactY = el.offsetTop + el.offsetHeight - (isWhite(midi) ? 40 : 28) * u;";
 
+// The game shows an intro overlay that requires a Start click. Auto-start
+// it so the player enters the game directly (audio unlocks on first
+// interaction via the game's built-in kick handler).
+const INTRO_LINE =
+  "    setHud();\n    els.intro.classList.add('is-on');\n  }";
+const INTRO_REPLACEMENT =
+  "    setHud();\n    setTimeout(start, 0);\n  }";
+
 export function parseParams(searchParams) {
   const get = (k, d) => searchParams.get(k) ?? d;
   const brRaw = String(get('br', 'default') || 'default').trim().toLowerCase();
@@ -55,6 +63,7 @@ export function buildGameHtml(rawHtml, br, obstacle) {
   const inject = `<script>window.__EK_QS=${JSON.stringify(qs)};</script>`;
   let html = rawHtml.replace(QS_LINE, QS_REPLACEMENT);
   html = html.replace(BALL_LINE, BALL_REPLACEMENT);
+  html = html.replace(INTRO_LINE, INTRO_REPLACEMENT);
   html = html.replace('</head>', `${inject}</head>`);
   return html;
 }
