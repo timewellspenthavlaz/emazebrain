@@ -42,14 +42,23 @@ const INTRO_REPLACEMENT =
 
 export function parseParams(searchParams) {
   const get = (k, d) => searchParams.get(k) ?? d;
+  const num = (k, d) => {
+    const v = parseInt(searchParams.get(k), 10);
+    return Number.isFinite(v) ? v : d;
+  };
   const brRaw = String(get('br', 'default') || 'default').trim().toLowerCase();
   const br = brRaw === 'right' || brRaw === 'left' ? brRaw : 'default';
   const obstacle = String(get('obstacle', 'false')).trim().toLowerCase() === 'true';
+  const cdRaw = String(get('countdown_timer', 'none')).trim().toLowerCase();
+  const countdown_timer = cdRaw === 'bar' || cdRaw === 'text' ? cdRaw : 'none';
   return {
     patientId: get('patientId', ''),
     callbackUrl: get('callbackUrl', ''),
     br,
     obstacle,
+    time_to_play: Math.max(0, num('time_to_play', 0)),
+    countdown_timer,
+    bg: get('bg', ''),
   };
 }
 
@@ -58,8 +67,10 @@ export function parseParams(searchParams) {
  *  1. it reads config from window.__EK_QS (set for srcdoc embeds), and
  *  2. that global is injected in <head> before any game script runs.
  */
-export function buildGameHtml(rawHtml, br, obstacle) {
-  const qs = `?br=${encodeURIComponent(br)}&obstacle=${obstacle ? 'true' : 'false'}`;
+export function buildGameHtml(rawHtml, br, obstacle, bg) {
+  const parts = [`br=${encodeURIComponent(br)}`, `obstacle=${obstacle ? 'true' : 'false'}`];
+  if (bg) parts.push(`bg=${encodeURIComponent(bg)}`);
+  const qs = `?${parts.join('&')}`;
   const inject = `<script>window.__EK_QS=${JSON.stringify(qs)};</script>`;
   let html = rawHtml.replace(QS_LINE, QS_REPLACEMENT);
   html = html.replace(BALL_LINE, BALL_REPLACEMENT);
@@ -103,6 +114,9 @@ export function buildPayload(summary, cfg, status) {
       highest_level: melodiesCompleted,
       br: cfg.br,
       obstacle: cfg.obstacle,
+      time_to_play: cfg.time_to_play,
+      countdown_timer: cfg.countdown_timer,
+      bg: cfg.bg,
     },
     level_history: perMelody.map((m, i) => ({
       level: i + 1,

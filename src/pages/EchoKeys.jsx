@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import { parseParams, GAME_HTML_URL, buildGameHtml, buildPayload } from '@/lib/echoKeys/config';
 import { sendGameResults } from '@/lib/gameResultSender';
+import CountdownTimer from '@/components/games/CountdownTimer';
 
 /**
  * Echo Keys — a piano melody-memory trainer on the Nocturne N-88.
@@ -15,6 +16,7 @@ export default function EchoKeys() {
   const cfg = useMemo(() => parseParams(searchParams), [searchParams]);
   const [gameHtml, setGameHtml] = useState(null);
   const [error, setError] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(cfg.time_to_play);
   const iframeRef = useRef(null);
   const sentRef = useRef(false);
   const cfgRef = useRef(cfg);
@@ -31,7 +33,7 @@ export default function EchoKeys() {
         return r.text();
       })
       .then((html) => {
-        if (alive) setGameHtml(buildGameHtml(html, cfg.br, cfg.obstacle));
+        if (alive) setGameHtml(buildGameHtml(html, cfg.br, cfg.obstacle, cfg.bg));
       })
       .catch((e) => {
         if (alive) setError(e.message || 'Failed to load game');
@@ -88,6 +90,27 @@ export default function EchoKeys() {
     return () => document.removeEventListener('visibilitychange', onHide);
   }, [submitResults]);
 
+  // ---- countdown timer: end the session when the budget runs out ----
+  useEffect(() => {
+    if (!gameHtml || cfg.time_to_play <= 0) return;
+    const id = setInterval(() => {
+      setTimeLeft((p) => {
+        if (p <= 1) {
+          clearInterval(id);
+          try {
+            const win = iframeRef.current?.contentWindow;
+            if (win?.PM?.Game && !sentRef.current) {
+              submitResults(win.PM.Game.summary(), 'completed');
+            }
+          } catch (e) { /* ignore */ }
+          return 0;
+        }
+        return p - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [gameHtml, cfg.time_to_play, submitResults]);
+
   if (error) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#06070C] text-white p-6">
@@ -107,8 +130,16 @@ export default function EchoKeys() {
     );
   }
 
+  const wrapperStyle = cfg.bg
+    ? { backgroundImage: `url(${cfg.bg})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : undefined;
+  const cdType = cfg.countdown_timer === 'bar' ? 'right' : cfg.countdown_timer === 'text' ? 'left' : 'none';
+
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#06070C]">
+    <div className="h-screen w-screen overflow-hidden bg-[#06070C] relative" style={wrapperStyle}>
+      {cdType !== 'none' && cfg.time_to_play > 0 && (
+        <CountdownTimer type={cdType} timeLeft={timeLeft} totalTime={cfg.time_to_play} />
+      )}
       <iframe
         ref={iframeRef}
         title="Echo Keys"
