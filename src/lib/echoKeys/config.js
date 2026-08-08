@@ -24,6 +24,14 @@ const QS_REPLACEMENT =
   "var s = ''; if (W.__EK_QS) { s = String(W.__EK_QS).replace(/^\\?/, ''); } " +
   "else if (W.location && W.location.search) { s = W.location.search.replace(/^\\?/, ''); }";
 
+// The ball rests at 30%/24% down the key (near the back), but the letter
+// labels sit near the front. Reposition the ball's contact point to sit
+// just above the letter on each key.
+const BALL_LINE =
+  "var contactY = keysEl.clientHeight * (isWhite(midi) ? 0.30 : 0.24);";
+const BALL_REPLACEMENT =
+  "var contactY = el.offsetTop + el.offsetHeight - (isWhite(midi) ? 40 : 28) * u;";
+
 export function parseParams(searchParams) {
   const get = (k, d) => searchParams.get(k) ?? d;
   const brRaw = String(get('br', 'default') || 'default').trim().toLowerCase();
@@ -46,6 +54,7 @@ export function buildGameHtml(rawHtml, br, obstacle) {
   const qs = `?br=${encodeURIComponent(br)}&obstacle=${obstacle ? 'true' : 'false'}`;
   const inject = `<script>window.__EK_QS=${JSON.stringify(qs)};</script>`;
   let html = rawHtml.replace(QS_LINE, QS_REPLACEMENT);
+  html = html.replace(BALL_LINE, BALL_REPLACEMENT);
   html = html.replace('</head>', `${inject}</head>`);
   return html;
 }
