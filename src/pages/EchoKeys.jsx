@@ -18,6 +18,7 @@ export default function EchoKeys() {
   const [error, setError] = useState(null);
   const [timeLeft, setTimeLeft] = useState(cfg.time_to_play);
   const [stopped, setStopped] = useState(false);
+  const [alignTop, setAlignTop] = useState(34);
   const iframeRef = useRef(null);
   const sentRef = useRef(false);
   const cfgRef = useRef(cfg);
@@ -49,6 +50,28 @@ export default function EchoKeys() {
     const payload = buildPayload(summary, cfgRef.current, status);
     sendGameResults(payload, cfgRef.current.callbackUrl);
   }, []);
+
+  // ---- measure the "Your turn" banner line so timers align to it ----
+  useEffect(() => {
+    if (!gameHtml) return;
+    const measure = () => {
+      try {
+        const win = iframeRef.current?.contentWindow;
+        const doc = win?.document;
+        const stage = doc?.getElementById('stage');
+        const piano = doc?.getElementById('piano');
+        if (!stage || !piano || !win.innerHeight) return;
+        const sRect = stage.getBoundingClientRect();
+        const pRect = piano.getBoundingClientRect();
+        const center = (sRect.top + pRect.top) / 2;
+        const pct = (center / win.innerHeight) * 100;
+        if (pct > 0 && pct < 100) setAlignTop(pct);
+      } catch (e) { /* not ready */ }
+    };
+    const t = setTimeout(measure, 800);
+    const id = setInterval(measure, 1500);
+    return () => { clearTimeout(t); clearInterval(id); };
+  }, [gameHtml]);
 
   // ---- poll the iframe for the finished summary (PM.lastSummary) ----
   useEffect(() => {
@@ -140,7 +163,7 @@ export default function EchoKeys() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#06070C] relative" style={wrapperStyle}>
       {cdType !== 'none' && cfg.time_to_play > 0 && !stopped && (
-        <CountdownTimer type={cdType} timeLeft={timeLeft} totalTime={cfg.time_to_play} />
+        <CountdownTimer type={cdType} timeLeft={timeLeft} totalTime={cfg.time_to_play} topPct={alignTop} />
       )}
       {!stopped && (
         <iframe
