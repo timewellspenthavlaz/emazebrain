@@ -70,7 +70,7 @@ const JINGLE_OBJ_REPLACEMENT =
 const BOLD_KEYBLACK_LINE =
   "      keyBlack: '#FF1352', keyBlackEdge: '#5C0219',";
 const BOLD_KEYBLACK_REPLACEMENT =
-  "      keyBlack: '#311B8E', keyBlackEdge: '#0E0840',";
+  "      keyBlack: '#1111ED', keyBlackEdge: '#0E0840',";
 
 // The game shows an intro overlay that requires a Start click. Auto-start
 // it so the player enters the game directly (audio unlocks on first
