@@ -17,6 +17,7 @@ export default function EchoKeys() {
   const [gameHtml, setGameHtml] = useState(null);
   const [error, setError] = useState(null);
   const [timeLeft, setTimeLeft] = useState(cfg.time_to_play);
+  const [stopped, setStopped] = useState(false);
   const iframeRef = useRef(null);
   const sentRef = useRef(false);
   const cfgRef = useRef(cfg);
@@ -103,6 +104,7 @@ export default function EchoKeys() {
               submitResults(win.PM.Game.summary(), 'completed');
             }
           } catch (e) { /* ignore */ }
+          setStopped(true);
           return 0;
         }
         return p - 1;
@@ -137,16 +139,26 @@ export default function EchoKeys() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#06070C] relative" style={wrapperStyle}>
-      {cdType !== 'none' && cfg.time_to_play > 0 && (
+      {cdType !== 'none' && cfg.time_to_play > 0 && !stopped && (
         <CountdownTimer type={cdType} timeLeft={timeLeft} totalTime={cfg.time_to_play} />
       )}
-      <iframe
-        ref={iframeRef}
-        title="Echo Keys"
-        srcDoc={gameHtml}
-        className="w-full h-full border-0 relative z-0"
-        allow="autoplay; clipboard-write"
-      />
+      {!stopped && (
+        <iframe
+          ref={iframeRef}
+          title="Echo Keys"
+          srcDoc={gameHtml}
+          className="w-full h-full border-0 relative z-0"
+          allow="autoplay; clipboard-write"
+        />
+      )}
+      {stopped && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#06070C]">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-white mb-3">Time's Up!</h2>
+            <p className="text-slate-400 text-lg">Your session has ended.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
