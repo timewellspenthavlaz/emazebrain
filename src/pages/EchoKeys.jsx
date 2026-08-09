@@ -144,7 +144,7 @@ export default function EchoKeys() {
         ref={iframeRef}
         title="Echo Keys"
         srcDoc={gameHtml}
-        className="w-full h-full border-0"
+        className="w-full h-full border-0 relative z-0"
         allow="autoplay; clipboard-write"
       />
     </div>
