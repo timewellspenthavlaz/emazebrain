@@ -133,7 +133,7 @@ export default function EchoKeys() {
   const wrapperStyle = cfg.bg
     ? { backgroundImage: `url(${cfg.bg})`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : undefined;
-  const cdType = cfg.countdown_timer === 'bar' ? 'right' : cfg.countdown_timer === 'text' ? 'left' : 'none';
+  const cdType = cfg.br === 'right' ? 'right' : cfg.br === 'left' ? 'left' : 'none';
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#06070C] relative" style={wrapperStyle}>

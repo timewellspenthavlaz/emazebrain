@@ -49,15 +49,12 @@ export function parseParams(searchParams) {
   const brRaw = String(get('br', 'default') || 'default').trim().toLowerCase();
   const br = brRaw === 'right' || brRaw === 'left' ? brRaw : 'default';
   const obstacle = String(get('obstacle', 'false')).trim().toLowerCase() === 'true';
-  const cdRaw = String(get('countdown_timer', 'none')).trim().toLowerCase();
-  const countdown_timer = cdRaw === 'bar' || cdRaw === 'text' ? cdRaw : 'none';
   return {
     patientId: get('patientId', ''),
     callbackUrl: get('callbackUrl', ''),
     br,
     obstacle,
     time_to_play: Math.max(0, num('time_to_play', 0)),
-    countdown_timer,
     bg: get('bg', ''),
   };
 }
@@ -115,7 +112,6 @@ export function buildPayload(summary, cfg, status) {
       br: cfg.br,
       obstacle: cfg.obstacle,
       time_to_play: cfg.time_to_play,
-      countdown_timer: cfg.countdown_timer,
       bg: cfg.bg,
     },
     level_history: perMelody.map((m, i) => ({
