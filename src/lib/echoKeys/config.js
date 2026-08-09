@@ -64,6 +64,14 @@ const JINGLE_OBJ_LINE =
 const JINGLE_OBJ_REPLACEMENT =
   "      id: 'jingle',\n      name: 'London Bridge Is Falling Down',\n      hint: 'London Bridge is falling down, falling down, falling down',\n      notes: seq(jingleM, jingleD)";
 
+// The cold ("bold") palette paints the half-tone (black) keys red, which
+// clashes with the cold blue of the natural keys. Repaint them a cold
+// indigo/violet so the whole keyboard reads as cold.
+const BOLD_KEYBLACK_LINE =
+  "      keyBlack: '#FF1352', keyBlackEdge: '#5C0219',";
+const BOLD_KEYBLACK_REPLACEMENT =
+  "      keyBlack: '#311B8E', keyBlackEdge: '#0E0840',";
+
 // The game shows an intro overlay that requires a Start click. Auto-start
 // it so the player enters the game directly (audio unlocks on first
 // interaction via the game's built-in kick handler).
@@ -109,6 +117,7 @@ export function buildGameHtml(rawHtml, br, obstacle, bg) {
   html = html.replace(TWINKLE_D_LINE, TWINKLE_D_REPLACEMENT);
   html = html.replace(JINGLE_M_LINE, JINGLE_M_REPLACEMENT);
   html = html.replace(JINGLE_OBJ_LINE, JINGLE_OBJ_REPLACEMENT);
+  html = html.replace(BOLD_KEYBLACK_LINE, BOLD_KEYBLACK_REPLACEMENT);
   html = html.replace('</head>', `${inject}</head>`);
   return html;
 }
