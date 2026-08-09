@@ -32,6 +32,17 @@ const BALL_LINE =
 const BALL_REPLACEMENT =
   "var contactY = el.offsetTop + el.offsetHeight - (isWhite(midi) ? 40 : 28) * u;";
 
+// "Twinkle Twinkle Little Star" ships with 21 notes; trim it to the first
+// 14 (the two opening phrases) for a shorter, focused run.
+const TWINKLE_M_LINE =
+  "  var twinkleM = [\n    60, 60, 67, 67, 69, 69, 67,\n    65, 65, 64, 64, 62, 62, 60,\n    67, 67, 65, 65, 64, 64, 62\n  ];";
+const TWINKLE_M_REPLACEMENT =
+  "  var twinkleM = [\n    60, 60, 67, 67, 69, 69, 67,\n    65, 65, 64, 64, 62, 62, 60\n  ];";
+const TWINKLE_D_LINE =
+  "  var twinkleD = [\n    450, 450, 450, 450, 450, 450, 900,\n    450, 450, 450, 450, 450, 450, 900,\n    450, 450, 450, 450, 450, 450, 900\n  ];";
+const TWINKLE_D_REPLACEMENT =
+  "  var twinkleD = [\n    450, 450, 450, 450, 450, 450, 900,\n    450, 450, 450, 450, 450, 450, 900\n  ];";
+
 // The game shows an intro overlay that requires a Start click. Auto-start
 // it so the player enters the game directly (audio unlocks on first
 // interaction via the game's built-in kick handler).
@@ -72,6 +83,8 @@ export function buildGameHtml(rawHtml, br, obstacle, bg) {
   let html = rawHtml.replace(QS_LINE, QS_REPLACEMENT);
   html = html.replace(BALL_LINE, BALL_REPLACEMENT);
   html = html.replace(INTRO_LINE, INTRO_REPLACEMENT);
+  html = html.replace(TWINKLE_M_LINE, TWINKLE_M_REPLACEMENT);
+  html = html.replace(TWINKLE_D_LINE, TWINKLE_D_REPLACEMENT);
   html = html.replace('</head>', `${inject}</head>`);
   return html;
 }
