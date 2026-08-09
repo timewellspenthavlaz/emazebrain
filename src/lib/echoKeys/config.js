@@ -51,6 +51,19 @@ const TWINKLE_D_LINE =
 const TWINKLE_D_REPLACEMENT =
   "  var twinkleD = [\n    450, 450, 450, 450, 450, 450, 900,\n    450, 450, 450, 450, 450, 450, 900\n  ];";
 
+// Replace "Jingle Bells" with "London Bridge Is Falling Down"
+// (public-domain nursery rhyme, key of C, 14 notes). We keep the internal
+// id/var names (jingle) so nothing else in the game needs to change.
+const JINGLE_M_LINE =
+  "  var jingleM = [\n    64, 64, 64,\n    64, 64, 64,\n    64, 67, 60, 62, 64,\n    65, 65, 65, 65, 65, 64, 64, 64, 64,\n    62, 62, 64, 62,\n    67\n  ];\n  var jingleD = [\n    380, 380, 760,\n    380, 380, 760,\n    380, 380, 570, 190, 1000,\n    380, 380, 380, 380, 380, 380, 380, 380, 380,\n    380, 380, 380, 380,\n    1100\n  ];";
+const JINGLE_M_REPLACEMENT =
+  "  var jingleM = [\n    67, 67, 69, 67,\n    65, 64, 65, 67,\n    62, 64, 65, 64, 62,\n    60\n  ];\n  var jingleD = [\n    450, 450, 450, 900,\n    450, 450, 450, 900,\n    450, 450, 450, 450, 900,\n    900\n  ];";
+
+const JINGLE_OBJ_LINE =
+  "      id: 'jingle',\n      name: 'Jingle Bells',\n      hint: 'Jingle bells, jingle bells, jingle all the way',\n      notes: seq(jingleM, jingleD)";
+const JINGLE_OBJ_REPLACEMENT =
+  "      id: 'jingle',\n      name: 'London Bridge Is Falling Down',\n      hint: 'London Bridge is falling down, falling down, falling down',\n      notes: seq(jingleM, jingleD)";
+
 // The game shows an intro overlay that requires a Start click. Auto-start
 // it so the player enters the game directly (audio unlocks on first
 // interaction via the game's built-in kick handler).
@@ -94,6 +107,8 @@ export function buildGameHtml(rawHtml, br, obstacle, bg) {
   html = html.replace(MELODIES_END_LINE, MELODIES_END_REPLACEMENT);
   html = html.replace(TWINKLE_M_LINE, TWINKLE_M_REPLACEMENT);
   html = html.replace(TWINKLE_D_LINE, TWINKLE_D_REPLACEMENT);
+  html = html.replace(JINGLE_M_LINE, JINGLE_M_REPLACEMENT);
+  html = html.replace(JINGLE_OBJ_LINE, JINGLE_OBJ_REPLACEMENT);
   html = html.replace('</head>', `${inject}</head>`);
   return html;
 }
