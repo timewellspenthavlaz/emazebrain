@@ -32,6 +32,14 @@ const BALL_LINE =
 const BALL_REPLACEMENT =
   "var contactY = el.offsetTop + el.offsetHeight - (isWhite(midi) ? 40 : 28) * u;";
 
+// Shuffle the melody order so the game doesn't always open with Twinkle.
+// Injected right after PM.MELODIES is assigned (Fisher-Yates in place).
+const MELODIES_END_LINE =
+  "      notes: seq(greenM, greenD)\n    }\n  ];";
+const MELODIES_END_REPLACEMENT =
+  "      notes: seq(greenM, greenD)\n    }\n  ];\n" +
+  "  (function(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}})(PM.MELODIES);";
+
 // "Twinkle Twinkle Little Star" ships with 21 notes; trim it to the first
 // 14 (the two opening phrases) for a shorter, focused run.
 const TWINKLE_M_LINE =
@@ -83,6 +91,7 @@ export function buildGameHtml(rawHtml, br, obstacle, bg) {
   let html = rawHtml.replace(QS_LINE, QS_REPLACEMENT);
   html = html.replace(BALL_LINE, BALL_REPLACEMENT);
   html = html.replace(INTRO_LINE, INTRO_REPLACEMENT);
+  html = html.replace(MELODIES_END_LINE, MELODIES_END_REPLACEMENT);
   html = html.replace(TWINKLE_M_LINE, TWINKLE_M_REPLACEMENT);
   html = html.replace(TWINKLE_D_LINE, TWINKLE_D_REPLACEMENT);
   html = html.replace('</head>', `${inject}</head>`);
