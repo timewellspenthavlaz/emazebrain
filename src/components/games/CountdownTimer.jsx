@@ -7,7 +7,7 @@ export default function CountdownTimer({ type, timeLeft, totalTime, topPct = 34 
   if (type === 'right') {
     const percent = Math.max(0, (timeLeft / totalTime) * 100);
     return (
-      <div className="absolute left-3 z-20 -translate-y-1/2" style={{ ...lineStyle, width: '20%' }}>
+      <div className="absolute left-10 z-20 -translate-y-1/2" style={{ ...lineStyle, width: '20%' }}>
         <div
           className="relative h-5 rounded-md overflow-hidden border-2 border-slate-600/80"
           style={{
@@ -34,7 +34,7 @@ export default function CountdownTimer({ type, timeLeft, totalTime, topPct = 34 
 
   if (type === 'left') {
     return (
-      <div className="absolute right-3 z-20 -translate-y-1/2" style={lineStyle}>
+      <div className="absolute right-10 z-20 -translate-y-1/2" style={lineStyle}>
         <div
           className="text-4xl font-black tabular-nums leading-none"
           style={{
