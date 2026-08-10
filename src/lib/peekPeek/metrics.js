@@ -183,11 +183,11 @@ export class PeekPeekMetrics {
     if (!r.firstTapDone) {
       r.firstTapDone = true;
       r.firstTapCorrect = correct;
-      r.firstTapLatencyMs = dtMs;
+      r.firstTapLatencyMs = dt;
       r.firstTapX = x;
       r.firstTapSide = side;
-      if (side < 0) r.leftFirstLat = dtMs;
-      else if (side > 0) r.rightFirstLat = dtMs;
+      if (side < 0) r.leftFirstLat = dt;
+      else if (side > 0) r.rightFirstLat = dt;
     }
 
     if (correct) {

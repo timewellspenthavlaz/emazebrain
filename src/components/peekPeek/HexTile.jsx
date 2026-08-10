@@ -1,5 +1,5 @@
 import React from 'react';
-import Image from '@/components/ui/image';
+import { Image } from '@/components/ui/image';
 
 const HEX_CLIP = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
 
