@@ -6,6 +6,7 @@ import CatchMeSessionCard from '@/components/games/CatchMeSessionCard';
 import OrbitalOrderSessionCard from '@/components/games/OrbitalOrderSessionCard';
 import BeepBeepSessionCard from '@/components/games/BeepBeepSessionCard';
 import EchoKeysSessionCard from '@/components/games/EchoKeysSessionCard';
+import PeekPeekSessionCard from '@/components/games/PeekPeekSessionCard';
 import moment from 'moment';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -66,6 +67,7 @@ export default function GameSessionList({ gameSessions }) {
   const hasBlockCrasher = sorted.some(g => g.game_id === 'block-crasher');
   const hasOrbital = sorted.some(g => g.game_id === 'orbital-order');
   const hasEcho = sorted.some(g => g.game_id === 'echo-keys');
+  const hasPeek = sorted.some(g => g.game_id === 'peek-peek');
   const hasBeep = sorted.some(g => g.game_id === 'beep-beep');
   const bestAccuracy = Math.max(
     0,
@@ -91,8 +93,12 @@ export default function GameSessionList({ gameSessions }) {
       .filter(g => g.game_id === 'echo-keys')
       .map(g => g.metrics?.accuracy || 0)
   );
+  const peekSessions = sorted.filter(g => g.game_id === 'peek-peek');
+  const bestPeekFirstRoundMisses = peekSessions.length
+    ? Math.min(...peekSessions.map(g => g.metrics?.first_round_misses_mean ?? 0))
+    : null;
   // Level cap depends on which game types are present (beep-beep max = 50, orbital max = 5, catch-me max = 9, block-crasher max = 10)
-  const levelCap = hasBeep ? 50
+  const levelCap = (hasBeep || hasPeek) ? 50
     : hasEcho && !hasOrbital && !hasCatchMe && !hasBlockCrasher ? 5
     : hasOrbital && !hasCatchMe && !hasBlockCrasher ? 5
     : hasCatchMe && !hasBlockCrasher ? 9 : 10;
@@ -104,6 +110,7 @@ export default function GameSessionList({ gameSessions }) {
     if (g.game_id === 'catch-me-if-you-can') return g.metrics?.accuracy_rate ?? null;
     if (g.game_id === 'block-crasher') return g.metrics?.paddle_miss_rate != null ? 1 - g.metrics.paddle_miss_rate : null;
     if (g.game_id === 'echo-keys') return g.metrics?.accuracy ?? null;
+    if (g.game_id === 'peek-peek') return g.metrics?.first_attempt_accuracy_ex_final ?? null;
     return null;
   };
   const progressionData = [...sorted]
@@ -158,6 +165,11 @@ export default function GameSessionList({ gameSessions }) {
               <p className="text-xs text-muted-foreground">Best Accuracy</p>
               <p className="text-lg font-bold text-cyan-600">{Math.round(bestEchoAccuracy * 100)}%</p>
             </div>
+          ) : hasPeek ? (
+            <div className="text-center p-3 rounded-lg bg-indigo-50">
+              <p className="text-xs text-muted-foreground">First-Round Misses</p>
+              <p className="text-lg font-bold text-indigo-600">{(bestPeekFirstRoundMisses ?? 0).toFixed(1)}</p>
+            </div>
           ) : (
             <div className="text-center p-3 rounded-lg bg-green-50">
               <p className="text-xs text-muted-foreground">Bricks Broken</p>
@@ -201,6 +213,9 @@ export default function GameSessionList({ gameSessions }) {
             }
             if (g.game_id === 'echo-keys') {
               return <EchoKeysSessionCard key={g.id} g={g} />;
+            }
+            if (g.game_id === 'peek-peek') {
+              return <PeekPeekSessionCard key={g.id} g={g} />;
             }
             const m = g.metrics || {};
             const specials = m.special_bricks_triggered || {};

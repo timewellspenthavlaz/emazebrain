@@ -23,6 +23,7 @@ import CatchMeIfYouCan from '@/pages/CatchMeIfYouCan';
 import OrbitalOrder from '@/pages/OrbitalOrder';
 import BeepBeep from '@/pages/BeepBeep';
 import EchoKeys from '@/pages/EchoKeys';
+import PeekPeek from '@/pages/PeekPeek';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -30,7 +31,7 @@ const AuthenticatedApp = () => {
 
   // Standalone games are playable without admin login
   // (they receive patientId + callbackUrl via URL params), so bypass the auth gate.
-  if (location.pathname.startsWith('/block-crasher') || location.pathname.startsWith('/catch-me-if-you-can') || location.pathname.startsWith('/orbital-order') || location.pathname.startsWith('/beep-beep') || location.pathname.startsWith('/echo-keys')) {
+  if (location.pathname.startsWith('/block-crasher') || location.pathname.startsWith('/catch-me-if-you-can') || location.pathname.startsWith('/orbital-order') || location.pathname.startsWith('/beep-beep') || location.pathname.startsWith('/echo-keys') || location.pathname.startsWith('/peek-peek')) {
     return (
       <Routes>
         <Route path="/block-crasher" element={<BlockCrasher />} />
@@ -38,6 +39,7 @@ const AuthenticatedApp = () => {
         <Route path="/orbital-order" element={<OrbitalOrder />} />
         <Route path="/beep-beep" element={<BeepBeep />} />
         <Route path="/echo-keys" element={<EchoKeys />} />
+        <Route path="/peek-peek" element={<PeekPeek />} />
       </Routes>
     );
   }
@@ -84,6 +86,7 @@ const AuthenticatedApp = () => {
       <Route path="/orbital-order" element={<OrbitalOrder />} />
       <Route path="/beep-beep" element={<BeepBeep />} />
       <Route path="/echo-keys" element={<EchoKeys />} />
+      <Route path="/peek-peek" element={<PeekPeek />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
