@@ -46,7 +46,7 @@ export default function HexTile({
         </div>
         {/* face-up front (picture) */}
         <div
-          className={"absolute inset-0 overflow-hidden" + (pulsed && !reduceMotion ? " animate-heartbeat" : "")}
+          className="absolute inset-0 overflow-hidden"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -76,6 +76,12 @@ export default function HexTile({
           )}
         </div>
       </div>
+      {pulsed && !reduceMotion && (
+        <div
+          className="absolute inset-0 pointer-events-none animate-heartbeat"
+          style={{ clipPath: HEX_CLIP }}
+        />
+      )}
     </div>
   );
 }
