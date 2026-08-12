@@ -511,8 +511,6 @@ export default function PeekPeek() {
   // ---- render ----
   if (phase === 'results' && result) return <Results payload={result} onPlayAgain={playAgain} />;
 
-  const trayScale = Math.max(16, Math.min(30, scale * 0.55));
-
   return (
     <div className="h-screen overflow-hidden flex flex-col items-center px-2 py-2 relative" style={{ background: bg.fieldCss, color: bg.chrome }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.25) 100%)' }} />
@@ -563,7 +561,7 @@ export default function PeekPeek() {
               board={board}
               pack={pack}
               currentIndex={targetIndex}
-              scale={trayScale}
+              scale={scale}
               reduceMotion={reduceMotion}
               backColor={backColor}
             />
