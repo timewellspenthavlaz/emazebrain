@@ -69,6 +69,7 @@ export default function PeekPeek() {
   const [toast, setToast] = useState(null);
   const [result, setResult] = useState(null);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [pulsedId, setPulsedId] = useState(null);
   const [scale, setScale] = useState(40);
 
   const metricsRef = useRef(null);
@@ -414,6 +415,9 @@ export default function PeekPeek() {
     const since = now - lastTapRef.current;
     if (since < 120) return;
     lastTapRef.current = now;
+    setPulsedId(hexId);
+    const _pt = setTimeout(() => setPulsedId((p) => (p === hexId ? null : p)), 660);
+    transitionTimerRef.current.push(_pt);
     metricsRef.current?.setInputMethod('touch');
     const bd = boardRef.current;
     const cell = bd.cellsById[hexId];
@@ -556,6 +560,7 @@ export default function PeekPeek() {
               wrongHexId={wrongHexId}
               revealAll={revealAll}
               selectedId={selectedId}
+              pulsedId={pulsedId}
               onTap={phase === 'hunting' ? tap : phase === 'control' ? controlTap : undefined}
               scale={scale}
               reduceMotion={reduceMotion}

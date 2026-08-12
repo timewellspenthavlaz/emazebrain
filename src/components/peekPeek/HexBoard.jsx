@@ -11,7 +11,7 @@ const H = 2; // hex height at R = 1
  */
 export default function HexBoard({
   board, pack, faceUpIds, claimedIds, wrongHexId, revealAll,
-  selectedId, onTap, scale, reduceMotion, backColor, wave,
+  selectedId, onTap, scale, reduceMotion, backColor, wave, pulsedId,
 }) {
   const cells = board.cells;
   const xs = cells.map((c) => c.cx);
@@ -45,6 +45,7 @@ export default function HexBoard({
             faceUp={faceUp}
             claimed={claimed}
             selected={selectedId === id}
+            pulsed={pulsedId === id}
             backColor={backColor}
             delay={delay}
             reduceMotion={reduceMotion}

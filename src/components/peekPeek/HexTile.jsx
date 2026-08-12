@@ -10,7 +10,7 @@ const HEX_CLIP = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
  */
 export default function HexTile({
   left, top, w, h, picUrl, faceUp, claimed, selected, dim,
-  backColor, onTap, delay = 0, reduceMotion = false, mark,
+  backColor, onTap, delay = 0, reduceMotion = false, mark, pulsed = false,
 }) {
   const flipped = !!faceUp;
   return (
@@ -46,7 +46,7 @@ export default function HexTile({
         </div>
         {/* face-up front (picture) */}
         <div
-          className="absolute inset-0 overflow-hidden"
+          className={"absolute inset-0 overflow-hidden" + (pulsed && !reduceMotion ? " animate-heartbeat" : "")}
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
