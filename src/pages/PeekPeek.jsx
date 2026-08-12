@@ -214,7 +214,7 @@ export default function PeekPeek() {
       attemptsRef.current = 1;
       b = buildLevel(lvl, d, pSize, cfg.orientation, seed);
     }
-    if (cfg.study_time) b.studySeconds = cfg.study_time;
+    b.studySeconds = cfg.study_time || 3;
     boardRef.current = b;
     setBoard(b);
     const pn = packForLevel(cfg.pack, lvl);
@@ -504,9 +504,14 @@ export default function PeekPeek() {
     setStreak(0);
     setTimeLeft(cfg.time_to_play);
     setTimerStarted(false);
-    setPhase('onboarding');
-    phaseRef.current = 'onboarding';
+    startGame();
   };
+
+  // ---- auto-start: skip onboarding, begin directly ----
+  useEffect(() => {
+    startGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---- render ----
   if (phase === 'results' && result) return <Results payload={result} onPlayAgain={playAgain} />;
@@ -572,26 +577,6 @@ export default function PeekPeek() {
                   : ''}
               </p>
             )}
-          </div>
-        )}
-
-        {/* onboarding */}
-        {phase === 'onboarding' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-20">
-            <div className="text-center max-w-sm px-6 text-white">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg viewBox="0 0 24 24" className="w-9 h-9 text-white" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <path d="M12 2l3 6 6 .9-4.5 4.2 1.2 6L12 16l-5.7 3 1.2-6L3 8.9 9 8z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-2">Peek Peek</h3>
-              <p className="text-slate-300 mb-5 text-sm">
-                Memorise where each picture sits. When the board hides, a target picture appears below — tap every hex hiding that same picture.
-              </p>
-              <button onClick={startGame} className="px-6 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 font-semibold transition-colors">
-                Start
-              </button>
-            </div>
           </div>
         )}
 
