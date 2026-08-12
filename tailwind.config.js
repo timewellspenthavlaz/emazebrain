@@ -81,9 +81,9 @@ module.exports = {
   					to: { opacity: '1', transform: 'translateY(0)' }
   				},
   				'heartbeat': {
-  					'0%': { boxShadow: '0 0 0 0 rgba(34,211,238,0)' },
-  					'35%': { boxShadow: '0 0 0 8px rgba(34,211,238,0.55), 0 0 14px rgba(34,211,238,0.45)' },
-  					'100%': { boxShadow: '0 0 0 0 rgba(34,211,238,0)' }
+  					'0%': { boxShadow: 'inset 0 0 0 0 rgba(34,211,238,0)' },
+  					'35%': { boxShadow: 'inset 0 0 0 4px rgba(34,211,238,0.9), inset 0 0 14px rgba(34,211,238,0.55)' },
+  					'100%': { boxShadow: 'inset 0 0 0 0 rgba(34,211,238,0)' }
   				},
   			'slide-in': {
   				from: { transform: 'translateX(-100%)' },
