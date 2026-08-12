@@ -87,6 +87,8 @@ export default function PeekPeek() {
   const areaRef = useRef(null);
   const sessionIdRef = useRef(sessionId);
   const streakRef = useRef(0);
+  const studyTickRef = useRef(null);
+  const transitionTimerRef = useRef([]);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
   useEffect(() => { levelRef.current = level; }, [level]);
@@ -171,18 +173,22 @@ export default function PeekPeek() {
     setFaceUpIds(all);
     let left = b.studySeconds;
     setStudyLeft(left);
-    const tick = setInterval(() => {
+    if (studyTickRef.current) clearInterval(studyTickRef.current);
+    studyTickRef.current = setInterval(() => {
       left -= 0.1;
       setStudyLeft(Math.max(0, left));
       if (left <= 0) {
-        clearInterval(tick);
+        clearInterval(studyTickRef.current);
+        studyTickRef.current = null;
         setFaceUpIds(new Set());
-        setTimeout(() => {
+        const t = setTimeout(() => {
+          if (sentRef.current) return;
           setWave(false);
           setPhase('hunting');
           phaseRef.current = 'hunting';
           startRound(0, b);
         }, 550);
+        transitionTimerRef.current.push(t);
       }
     }, 100);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -255,7 +261,8 @@ export default function PeekPeek() {
     if (next >= bd.K) {
       clearLevel();
     } else {
-      setTimeout(() => startRound(next, bd), 250);
+      const t = setTimeout(() => { if (!sentRef.current) startRound(next, bd); }, 250);
+      transitionTimerRef.current.push(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startRound]);
@@ -271,7 +278,8 @@ export default function PeekPeek() {
       confetti({ particleCount: 70, spread: 65, origin: { y: 0.45 }, colors: ['#22D3EE', '#34D399', '#F59E0B', '#60A5FA'], ticks: 200 });
     }
     const nextLevel = levelRef.current + 1;
-    setTimeout(() => {
+    const t = setTimeout(() => {
+      if (sentRef.current) return;
       if (nextLevel > cfg.max_level) {
         endSession('completed', 'MAX_LEVEL');
       } else {
@@ -280,6 +288,7 @@ export default function PeekPeek() {
         startLevel(nextLevel, false);
       }
     }, 950);
+    transitionTimerRef.current.push(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg, reduceMotion, startLevel]);
 
@@ -299,16 +308,19 @@ export default function PeekPeek() {
       const nextLevel = levelRef.current + 1;
       setToast('Moving to the next board');
       setTimeout(() => setToast(null), 1400);
-      setTimeout(() => {
+      const t = setTimeout(() => {
+        if (sentRef.current) return;
         if (nextLevel > cfg.max_level) endSession('completed', 'MAX_LEVEL');
         else { setLevel(nextLevel); levelRef.current = nextLevel; startLevel(nextLevel, false); }
       }, 1100);
+      transitionTimerRef.current.push(t);
       return;
     }
     if (unlimited || nl > 0) {
       setToast('New board — same size');
       setTimeout(() => setToast(null), 1300);
-      setTimeout(() => startLevel(levelRef.current, true), 1100);
+      const t2 = setTimeout(() => { if (!sentRef.current) startLevel(levelRef.current, true); }, 1100);
+      transitionTimerRef.current.push(t2);
     } else {
       endSession('game_over', 'NO_LIVES');
     }
@@ -328,6 +340,7 @@ export default function PeekPeek() {
       reRevealTimer.current = setTimeout(() => {
         setRevealAll(false);
         reRevealRef.current = false;
+        if (sentRef.current) return;
         if (newHearts <= 0) failLevel('hearts');
       }, 2000);
     }, 700);
@@ -415,7 +428,8 @@ export default function PeekPeek() {
         setRevealAll(false);
         setToast('Control complete — starting memory rounds');
         setTimeout(() => setToast(null), 1500);
-        setTimeout(() => startLevel(cfg.level, false), 900);
+        const t = setTimeout(() => { if (!sentRef.current) startLevel(cfg.level, false); }, 900);
+        transitionTimerRef.current.push(t);
       }
     }
   }, [cfg, startLevel]);
@@ -452,6 +466,10 @@ export default function PeekPeek() {
   const endSession = useCallback((status, reason) => {
     if (sentRef.current) return;
     sentRef.current = true;
+    if (studyTickRef.current) { clearInterval(studyTickRef.current); studyTickRef.current = null; }
+    if (reRevealTimer.current) { clearTimeout(reRevealTimer.current); reRevealTimer.current = null; }
+    transitionTimerRef.current.forEach((t) => clearTimeout(t));
+    transitionTimerRef.current = [];
     if (reason === 'timer' || reason === 'abandoned') {
       metricsRef.current?.flushPartialLevel(reason);
     } else if (metricsRef.current?.curRound) {
