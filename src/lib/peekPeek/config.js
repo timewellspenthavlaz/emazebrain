@@ -219,6 +219,8 @@ export function parseParams(searchParams) {
   const studyTimeOverride = num('study_time', 0) > 0 ? num('study_time', 0) : null;
   const sound = bool('sound', false);
   const paletteBand = br === 'right' ? 'cold' : br === 'left' ? 'warm' : 'neutral';
+  const langRaw = String(get('lang', 'en')).toLowerCase();
+  const lang = ['en', 'he', 'fr', 'es', 'ru', 'zh'].includes(langRaw) ? langRaw : 'en';
 
   return {
     patientId: get('patientId', ''),
@@ -239,5 +241,6 @@ export function parseParams(searchParams) {
     study_time: studyTimeOverride,
     sound,
     paletteBand,
+    lang,
   };
 }

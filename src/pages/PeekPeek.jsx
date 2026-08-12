@@ -13,6 +13,7 @@ import TargetTray from '@/components/peekPeek/TargetTray';
 import Hud from '@/components/peekPeek/Hud';
 import Results from '@/components/peekPeek/Results';
 import CountdownTimer from '@/components/games/CountdownTimer';
+import InstructionsModal from '@/components/peekPeek/InstructionsModal';
 
 const W = Math.sqrt(3);
 const H = 2;
@@ -67,6 +68,7 @@ export default function PeekPeek() {
   const [timerStarted, setTimerStarted] = useState(false);
   const [toast, setToast] = useState(null);
   const [result, setResult] = useState(null);
+  const [showInstructions, setShowInstructions] = useState(true);
   const [scale, setScale] = useState(40);
 
   const metricsRef = useRef(null);
@@ -504,14 +506,15 @@ export default function PeekPeek() {
     setStreak(0);
     setTimeLeft(cfg.time_to_play);
     setTimerStarted(false);
-    startGame();
+    setPhase('onboarding');
+    phaseRef.current = 'onboarding';
+    setShowInstructions(true);
   };
 
-  // ---- auto-start: skip onboarding, begin directly ----
-  useEffect(() => {
+  const dismissInstructions = () => {
+    setShowInstructions(false);
     startGame();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   // ---- render ----
   if (phase === 'results' && result) return <Results payload={result} onPlayAgain={playAgain} />;
@@ -519,6 +522,8 @@ export default function PeekPeek() {
   return (
     <div className="h-screen overflow-hidden flex flex-col items-center px-2 py-2 relative" style={{ background: bg.fieldCss, color: bg.chrome }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.25) 100%)' }} />
+
+      {showInstructions && <InstructionsModal lang={cfg.lang} onDismiss={dismissInstructions} />}
 
       {cdType !== 'none' && cfg.time_to_play > 0 && phase !== 'onboarding' && (
         <CountdownTimer type={cdType} timeLeft={timeLeft} totalTime={cfg.time_to_play} topPct={16} />
