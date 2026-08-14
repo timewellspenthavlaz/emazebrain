@@ -81,8 +81,10 @@ module.exports = {
   					to: { opacity: '1', transform: 'translateY(0)' }
   				},
   				'heartbeat': {
-  					'0%': { boxShadow: 'inset 0 0 0 0 rgba(34,211,238,0)' },
-  					'35%': { boxShadow: 'inset 0 0 0 4px rgba(34,211,238,0.9), inset 0 0 14px rgba(34,211,238,0.55)' },
+  					'0%': { boxShadow: 'inset 0 0 0 0 rgba(34,211,238,0), inset 0 0 0 0 rgba(255,255,255,0)' },
+  					'18%': { boxShadow: 'inset 0 0 0 8px rgba(34,211,238,0.95), inset 0 0 22px rgba(34,211,238,0.7), inset 0 0 0 2px rgba(255,255,255,0.85)' },
+  					'38%': { boxShadow: 'inset 0 0 0 3px rgba(34,211,238,0.45), inset 0 0 10px rgba(34,211,238,0.25)' },
+  					'62%': { boxShadow: 'inset 0 0 0 9px rgba(34,211,238,0.95), inset 0 0 26px rgba(34,211,238,0.8), inset 0 0 0 2px rgba(255,255,255,0.85)' },
   					'100%': { boxShadow: 'inset 0 0 0 0 rgba(34,211,238,0)' }
   				},
   			'slide-in': {
@@ -95,7 +97,7 @@ module.exports = {
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'fade-in': 'fade-in 0.3s ease-out',
   			'slide-in': 'slide-in 0.3s ease-out',
-  			'heartbeat': 'heartbeat 0.65s ease-out'
+  			'heartbeat': 'heartbeat 0.85s ease-out'
   		}
   	}
   },

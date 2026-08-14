@@ -416,7 +416,7 @@ export default function PeekPeek() {
     if (since < 120) return;
     lastTapRef.current = now;
     setPulsedId(hexId);
-    const _pt = setTimeout(() => setPulsedId((p) => (p === hexId ? null : p)), 660);
+    const _pt = setTimeout(() => setPulsedId((p) => (p === hexId ? null : p)), 880);
     transitionTimerRef.current.push(_pt);
     metricsRef.current?.setInputMethod('touch');
     const bd = boardRef.current;
