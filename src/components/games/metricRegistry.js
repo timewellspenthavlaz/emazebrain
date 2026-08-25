@@ -127,18 +127,25 @@ export function getMetricByKey(gameId, key) {
   return { key, ...g[key] };
 }
 
-// Build the 30-day trend series for a metric, anchored at refSession's date.
+// Build the 30-day trend series for a metric. The window is the last `days`
+// days from today (so every recent execution of the same game appears, no
+// matter which session was clicked), but the clicked session is guaranteed to
+// be included and highlighted even if it sits just outside that window.
 export function buildTrendSeries(gameSessions, gameId, key, refSession, days = 30) {
   const meta = getMetricByKey(gameId, key);
   if (!meta) return { points: [], meta: null, startDate: null, refDate: null };
-  const ref = refSession ? new Date(refSession.session_date || refSession.created_date) : new Date();
+  const now = new Date();
+  const ref = refSession ? new Date(refSession.session_date || refSession.created_date) : now;
   if (isNaN(ref.getTime())) return { points: [], meta, startDate: null, refDate: null };
-  const start = new Date(ref.getTime() - days * 86400000);
+  // Window end = latest of "now" and the clicked session, so the clicked run
+  // is always visible; window spans `days` back from that end.
+  const end = ref.getTime() > now.getTime() ? ref : now;
+  const start = new Date(end.getTime() - days * 86400000);
   const sessions = (gameSessions || [])
     .filter((g) => g.game_id === gameId)
     .filter((g) => {
       const d = new Date(g.session_date || g.created_date);
-      return !isNaN(d.getTime()) && d >= start && d <= ref;
+      return !isNaN(d.getTime()) && d >= start && d <= end;
     })
     .sort((a, b) => new Date(a.session_date || a.created_date) - new Date(b.session_date || b.created_date));
   const points = sessions
@@ -154,7 +161,7 @@ export function buildTrendSeries(gameSessions, gameId, key, refSession, days = 3
       };
     })
     .filter(Boolean);
-  return { points, meta, startDate: start, refDate: ref };
+  return { points, meta, startDate: start, refDate: end };
 }
 
 export function formatTrendValue(v, meta) {
