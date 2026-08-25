@@ -148,14 +148,23 @@ export function buildTrendSeries(gameSessions, gameId, key, refSession, days = 3
       return !isNaN(d.getTime()) && d >= start && d <= end;
     })
     .sort((a, b) => new Date(a.session_date || a.created_date) - new Date(b.session_date || b.created_date));
+  let runBest = null;
   const points = sessions
     .map((g) => {
       const v = meta.get(g);
       if (v == null) return null;
+      const val = meta.isPct ? v * 100 : v;
+      runBest =
+        runBest == null
+          ? val
+          : meta.lowerIsBetter
+            ? Math.min(runBest, val)
+            : Math.max(runBest, val);
       return {
         id: g.id,
         date: g.session_date || g.created_date,
-        value: meta.isPct ? v * 100 : v,
+        value: val,
+        bestSoFar: runBest,
         isCurrent: !!(refSession && g.id === refSession.id),
         status: g.status,
       };

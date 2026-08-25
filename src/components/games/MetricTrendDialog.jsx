@@ -119,18 +119,29 @@ export default function MetricTrendDialog({ open, onOpenChange, gameSessions, ga
                         );
                       }}
                     />
+                    {/* Running-best line — connects the highest results over time */}
+                    <Line
+                      type="stepBefore"
+                      dataKey="bestSoFar"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                    {/* Every individual run as a dot */}
                     <Line
                       type="monotone"
                       dataKey="value"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
+                      stroke="transparent"
+                      strokeWidth={0}
                       dot={(p) => {
                         const cx = p.cx, cy = p.cy;
                         if (p.payload?.isCurrent) {
                           return <circle cx={cx} cy={cy} r={5} fill="hsl(var(--accent))" stroke="#fff" strokeWidth={2} />;
                         }
-                        return <circle cx={cx} cy={cy} r={3} fill="hsl(var(--primary))" opacity={0.7} />;
+                        return <circle cx={cx} cy={cy} r={3} fill="hsl(var(--primary))" opacity={0.55} />;
                       }}
+                      activeDot={false}
                       isAnimationActive={false}
                     />
                   </LineChart>
@@ -139,7 +150,7 @@ export default function MetricTrendDialog({ open, onOpenChange, gameSessions, ga
 
               <p className="text-[11px] text-muted-foreground text-center">
                 Window: {moment(startDate).format('MMM DD')} → {moment(refDate).format('MMM DD, YYYY')} ·
-                each point is one execution of {gameMeta.label}.
+                dots = individual runs · line = best result so far.
               </p>
             </>
           )}
