@@ -85,6 +85,23 @@ function DeltaBadge({ delta, lowerIsBetter }) {
   );
 }
 
+function SessionHead({ g, color }) {
+  return (
+    <div className={`rounded-lg border p-3 ${color}`}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold">⭐ {g.score || 0}</span>
+        <StatusBadge status={g.status} />
+      </div>
+      <p className="text-[11px] text-muted-foreground mt-1">
+        {moment(g.session_date || g.created_date).format('MMM DD, YYYY · HH:mm')}
+      </p>
+      <p className="text-[11px] text-muted-foreground">
+        Level {g.highest_level || 0} · {(g.duration_seconds || 0).toFixed(0)}s
+      </p>
+    </div>
+  );
+}
+
 /**
  * CompareDrawer — a right-side sheet that shows either a single selected
  * session's full detail card, or a side-by-side compare of two pinned
@@ -92,8 +109,6 @@ function DeltaBadge({ delta, lowerIsBetter }) {
  */
 export default function CompareDrawer({ open, onOpenChange, mode, gameId, sessionA, sessionB }) {
   const meta = GAME_META[gameId] || { label: gameId, icon: '🎮' };
-  const headA = sessionA && moment(sessionA.session_date || sessionA.created_date);
-  const headB = sessionB && moment(sessionB.session_date || sessionB.created_date);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -104,8 +119,47 @@ export default function CompareDrawer({ open, onOpenChange, mode, gameId, sessio
             {mode === 'compare' ? 'Compare Runs' : 'Session Details'} — {meta.label}
           </SheetTitle>
         </SheetHeader>
-        <div className="space-y-4 px-1 pb-2">
-...
+
+        <div className="space-y-4 px-1 pb-6">
+          {mode === 'single' && sessionA && (
+            <SessionDetailCard g={sessionA} />
+          )}
+
+          {mode === 'compare' && sessionA && sessionB && (
+            <>
+              {/* Full detail cards stacked for both runs */}
+              <div className="space-y-3">
+                <SessionDetailCard g={sessionA} />
+                <SessionDetailCard g={sessionB} />
+              </div>
+
+              {/* Aligned metric comparison table */}
+              <div className="rounded-lg border border-border overflow-hidden">
+                <div className="grid grid-cols-3 bg-muted/40 border-b border-border">
+                  <div className="px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase">Metric</div>
+                  <div className="px-3 py-2 text-[11px] font-semibold text-blue-700 uppercase">Run A</div>
+                  <div className="px-3 py-2 text-[11px] font-semibold text-emerald-700 uppercase">Run B</div>
+                </div>
+                {compareRows(gameId, sessionA, sessionB).map((r, i) => (
+                  <div key={r.label} className={`grid grid-cols-3 items-center ${i % 2 ? 'bg-muted/20' : ''}`}>
+                    <div className="px-3 py-2 text-xs text-muted-foreground">{r.label}</div>
+                    <div className="px-3 py-2 text-sm font-medium text-blue-700 flex items-center gap-1.5">
+                      {r.a}
+                      <DeltaBadge delta={r.delta} lowerIsBetter={r.lowerIsBetter} />
+                    </div>
+                    <div className="px-3 py-2 text-sm font-medium text-emerald-700">{r.b}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Delta = Run B − Run A. Green = improvement, red = decline (relative to each metric's goal).
+              </p>
+            </>
+          )}
+
+          {!sessionA && (
+            <p className="text-sm text-muted-foreground text-center py-8">No session selected</p>
+          )}
         </div>
       </SheetContent>
     </Sheet>
