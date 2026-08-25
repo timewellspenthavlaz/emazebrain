@@ -3,17 +3,7 @@ import { Clock, Star, Heart, Target, Compass, Gauge, Activity, Timer, Repeat, Tr
 import StatusBadge from '@/components/admin/StatusBadge';
 import moment from 'moment';
 
-function MetricBox({ icon: Icon, label, value, color = 'text-foreground' }) {
-  return (
-    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30">
-      {Icon && <Icon className={`w-4 h-4 ${color} shrink-0`} />}
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</p>
-        <p className={`text-sm font-semibold ${color}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
+import MetricBox from './MetricBox';
 const pct = (v) => (v == null || isNaN(v) ? '—' : `${Math.round(v * 100)}%`);
 const ms = (v) => (v == null || isNaN(v) ? '—' : `${Math.round(v)}ms`);
 const s = (v) => (v == null || isNaN(v) ? '—' : `${v.toFixed(1)}s`);

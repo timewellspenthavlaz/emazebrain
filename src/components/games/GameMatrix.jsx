@@ -188,6 +188,7 @@ export default function GameMatrix({ gameSessions }) {
           gameId={drawer.gameId}
           sessionA={drawer.a}
           sessionB={drawer.b}
+          gameSessions={gameSessions}
         />
       </CardContent>
     </Card>
