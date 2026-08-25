@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { ArrowLeft, User, Calendar, Stethoscope, Building2, Brain, Activity, FileText, TrendingUp } from 'lucide-react';
 import StatusBadge from '@/components/admin/StatusBadge';
 import TherapyLogSection from '@/components/therapy/TherapyLogSection';
-import GameSessionList from '@/components/games/GameSessionList';
+import GameMatrix from '@/components/games/GameMatrix';
 import { calcAgeGroup } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -253,7 +253,7 @@ export default function PatientDetail() {
           </Card>
 
           {/* Game Sessions */}
-          <GameSessionList gameSessions={gameSessions} />
+          <GameMatrix gameSessions={gameSessions} />
 
           {/* Therapy Log */}
           <TherapyLogSection patient={patient} />

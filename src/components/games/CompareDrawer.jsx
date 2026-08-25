@@ -1,0 +1,113 @@
+import React from 'react';
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet';
+import moment from 'moment';
+import StatusBadge from '@/components/admin/StatusBadge';
+import CatchMeSessionCard from '@/components/games/CatchMeSessionCard';
+import OrbitalOrderSessionCard from '@/components/games/OrbitalOrderSessionCard';
+import BeepBeepSessionCard from '@/components/games/BeepBeepSessionCard';
+import EchoKeysSessionCard from '@/components/games/EchoKeysSessionCard';
+import PeekPeekSessionCard from '@/components/games/PeekPeekSessionCard';
+import { compareRows, GAME_META } from './gameMatrixHelpers';
+
+function SessionDetailCard({ g }) {
+  switch (g.game_id) {
+    case 'catch-me-if-you-can': return <CatchMeSessionCard g={g} />;
+    case 'orbital-order': return <OrbitalOrderSessionCard g={g} />;
+    case 'beep-beep': return <BeepBeepSessionCard g={g} />;
+    case 'echo-keys': return <EchoKeysSessionCard g={g} />;
+    case 'peek-peek': return <PeekPeekSessionCard g={g} />;
+    default: return <BlockCrasherDetail g={g} />;
+  }
+}
+
+function BlockCrasherDetail({ g }) {
+  const m = g.metrics || {};
+  const specials = m.special_bricks_triggered || {};
+  const fmt = (v, s = '') => (v == null || isNaN(v) ? '—' : `${Math.round(v)}${s}`);
+  const pct = (v) => (v == null || isNaN(v) ? '—' : `${Math.round(v * 100)}%`);
+  const sec = (v) => (v == null || isNaN(v) ? '—' : `${v.toFixed(1)}s`);
+  const Box = ({ label, value, color = 'text-foreground' }) => (
+    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30">
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</p>
+        <p className={`text-sm font-semibold ${color}`}>{value}</p>
+      </div>
+    </div>
+  );
+  return (
+    <div className="p-4 rounded-lg border border-border">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent/10 shrink-0">🧱</div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium capitalize">{g.game_id?.replace(/-/g, ' ') || 'Game'}</p>
+          <p className="text-xs text-muted-foreground">{moment(g.session_date || g.created_date).format('MMM DD, YYYY · HH:mm')} · {sec(g.duration_seconds)}</p>
+        </div>
+        <span className="text-sm font-semibold text-yellow-500">⭐ {g.score || 0}</span>
+        <StatusBadge status={g.status} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+        <Box label="Highest Level" value={`${g.highest_level || 0}/10`} color="text-primary" />
+        <Box label="Lives Left" value={g.lives_remaining ?? 0} color="text-red-500" />
+        <Box label="Levels Completed" value={g.levels_completed ?? 0} />
+        <Box label="Bricks Destroyed" value={m.total_bricks_destroyed ?? 0} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+        <Box label="Paddle Hits" value={m.paddle_hits ?? 0} />
+        <Box label="Balls Lost" value={m.balls_lost ?? 0} color="text-red-500" />
+        <Box label="Miss Rate" value={pct(m.paddle_miss_rate)} color="text-red-500" />
+        <Box label="Avg Intercept Gap" value={fmt(m.avg_intercept_gap, 'px')} />
+      </div>
+      {Object.keys(specials).length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs text-muted-foreground mb-1">Special Bricks Triggered</p>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(specials).map(([t, c]) => (
+              <span key={t} className="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700 capitalize">{t.replace(/_/g, ' ')}: {c}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DeltaBadge({ delta, lowerIsBetter }) {
+  if (delta == null || delta === 0) return <span className="text-[11px] text-muted-foreground">—</span>;
+  const improved = lowerIsBetter ? delta < 0 : delta > 0;
+  const sign = delta > 0 ? '+' : '';
+  const val = Number.isInteger(delta) ? delta : delta.toFixed(2);
+  return (
+    <span className={`text-[11px] font-semibold ${improved ? 'text-emerald-600' : 'text-rose-500'}`}>
+      {sign}{val}
+    </span>
+  );
+}
+
+/**
+ * CompareDrawer — a right-side sheet that shows either a single selected
+ * session's full detail card, or a side-by-side compare of two pinned
+ * sessions of the same game with aligned metric rows + deltas.
+ */
+export default function CompareDrawer({ open, onOpenChange, mode, gameId, sessionA, sessionB }) {
+  const meta = GAME_META[gameId] || { label: gameId, icon: '🎮' };
+  const headA = sessionA && moment(sessionA.session_date || sessionA.created_date);
+  const headB = sessionB && moment(sessionB.session_date || sessionB.created_date);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <span className="text-base">{meta.icon}</span>
+            {mode === 'compare' ? 'Compare Runs' : 'Session Details'} — {meta.label}
+          </SheetTitle>
+        </SheetHeader>
+        <div className="space-y-4 px-1 pb-2">
+...
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
