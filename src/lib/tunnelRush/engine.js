@@ -48,6 +48,7 @@ export class TunnelEngine {
     this.rotations = 0;
     this.streak = 0;          // consecutive clean dodges → speed creeps up
     this.speed = this.bandMin();
+    this.hitSlow = 0;         // seconds of "ran into an object" penalty slowdown left
     // Pre-spawn the first visible objects so the ready screen shows the
     // tunnel ahead (they stay frozen until the first rotation).
     while (this.nextObstacleZ < VIEW_DEPTH) {
@@ -98,7 +99,10 @@ export class TunnelEngine {
   }
 
   update(dt) {
-    this.scroll += this.speed * dt;
+    // A hit briefly slows the run (500ms) so the mistake feels tangible.
+    const slowFactor = this.hitSlow > 0 ? 0.5 : 1;
+    this.hitSlow = Math.max(0, this.hitSlow - dt);
+    this.scroll += this.speed * slowFactor * dt;
 
     // Ambient spin the patient must compensate for.
     if (this.direction !== 'none') {
@@ -130,6 +134,7 @@ export class TunnelEngine {
         // ceiling; a hit eases it back toward the floor.
         if (hit) {
           this.streak = 0;
+          this.hitSlow = 0.5;
           this.speed = Math.max(this.bandMin(), this.speed - this.speedStep() * 2.5);
         } else {
           this.streak += 1;

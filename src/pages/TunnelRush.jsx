@@ -22,11 +22,11 @@ export default function TunnelRush() {
   const [phase, setPhase] = useState('instructions'); // instructions | ready | playing | summary
   const [frame, setFrame] = useState({ angle: 0, scroll: 0, obstacles: [] });
   const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(cfg.lives);
   const [level, setLevel] = useState(cfg.level);
   const [timeLeft, setTimeLeft] = useState(cfg.timeToPlay);
   const [pill, setPill] = useState(null);
   const [hitFlash, setHitFlash] = useState(0);
+  const [shaking, setShaking] = useState(false);
   const [summary, setSummary] = useState(null);
 
   // ---- refs (timing-critical) ----
@@ -36,6 +36,7 @@ export default function TunnelRush() {
   const visualAngleRef = useRef(0);
   const timeUpRef = useRef(false);
   const pillTimeoutRef = useRef(null);
+  const shakeTimeoutRef = useRef(null);
   const audioRef = useRef(null);
   const touchXRef = useRef(null);
   const lastScrollRef = useRef(0);
@@ -106,27 +107,27 @@ export default function TunnelRush() {
   }, []);
 
   // ---- obstacle resolution ----
+  // Hits never end the run — the session is driven purely by the timer.
+  // A hit only gives unmistakable feedback: crimson flash + screen shake +
+  // a 500ms slowdown (engine-side).
   const handlePassed = useCallback((events) => {
     const m = metrics.current;
     for (const ev of events) {
       m.recordObstacle(ev);
       if (ev.hit) {
         ping(130, 0.14, 'sawtooth');
-        showPill(false, m.lives > 0 && m.lives - m.livesLost <= 0 ? 'Game Over' : 'Hit! −1 life');
+        showPill(false, 'Hit!');
         setHitFlash((n) => n + 1);
-        if (m.lives > 0 && m.lives - m.livesLost <= 0) {
-          setScore(Math.round(m.score));
-          endSession('hitLimit');
-          return;
-        }
+        setShaking(true);
+        if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+        shakeTimeoutRef.current = setTimeout(() => setShaking(false), 500);
       } else {
         ping(520, 0.06);
         showPill(true, `+${10 + Math.min(m.streak, 10) * 2}`);
       }
     }
     setScore(Math.round(m.score));
-    setLives(Math.max(0, m.lives - m.livesLost));
-  }, [endSession, ping, showPill]);
+  }, [ping, showPill]);
 
   // ---- main loop ----
   useEffect(() => {
@@ -215,7 +216,6 @@ export default function TunnelRush() {
     return <Summary summary={summary} colors={colors} patientId={cfg.patientId} />;
   }
 
-  const livesOn = cfg.lives > 0;
   const glassPill = (correct) => ({
     background: 'rgba(18,24,38,0.7)',
     backdropFilter: 'blur(10px)',
@@ -231,7 +231,7 @@ export default function TunnelRush() {
   };
 
   return (
-    <div className="h-screen overflow-hidden relative select-none"
+    <div className={`h-screen overflow-hidden relative select-none ${shaking ? 'animate-shake' : ''}`}
       style={{ background: pageBackground(cfg, colors), color: colors.text }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}>
@@ -251,8 +251,6 @@ export default function TunnelRush() {
 
       <Hud
         score={score}
-        lives={lives}
-        livesOn={livesOn}
         level={level}
         timeLeft={timeLeft}
         showTime={cfg.timeToPlay > 0}
