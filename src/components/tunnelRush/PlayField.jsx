@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import ObjectGlyph from './Objects';
 import ShipGlyph from './Ship';
-import { VIEW_DEPTH, laneColor, CURVE_AMPS } from '@/lib/tunnelRush/config';
+import { VIEW_DEPTH, laneColor, LANE_PALETTE, CURVE_AMPS } from '@/lib/tunnelRush/config';
 
 /**
  * PlayField — the tunnel stage. SVG/CSS pseudo-3D with a visibly bending
@@ -44,6 +44,14 @@ function ringPoint(g, arc, i, rot) {
 }
 
 const ptStr = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+
+// Shade a hex color toward white (amt > 0) or black (amt < 0) — metallic sheen.
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const mix = (c) => Math.round(amt >= 0 ? c + (255 - c) * amt : c * (1 + amt));
+  return `#${((1 << 24) + (mix(r) << 16) + (mix(g) << 8) + mix(b)).toString(16).slice(1)}`;
+}
 
 // Deterministic star field for the `stars` scene.
 function useStars() {
@@ -113,6 +121,20 @@ export default function PlayField({
           <stop offset="70%" stopColor={colors.page} />
           <stop offset="100%" stopColor={colors.surface} />
         </radialGradient>
+        {/* metallic panel sheen per lane color */}
+        {LANE_PALETTE.map((c, i) => (
+          <linearGradient key={i} id={`tr-panel-${i}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={shade(c, 0.35)} />
+            <stop offset="45%" stopColor={c} />
+            <stop offset="100%" stopColor={shade(c, -0.55)} />
+          </linearGradient>
+        ))}
+        {/* depth fog swallowing the far end of the corridor */}
+        <radialGradient id="tr-fog" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={colors.page} stopOpacity="0.85" />
+          <stop offset="55%" stopColor={colors.page} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={colors.page} stopOpacity="0" />
+        </radialGradient>
       </defs>
 
       {/* Scene backdrop */}
@@ -173,8 +195,8 @@ export default function PlayField({
           return (
             <polygon key={`${k}-${j}`}
               points={`${ptStr(a1)} ${ptStr(b1)} ${ptStr(b2)} ${ptStr(a2)}`}
-              fill={laneColor(j)} fillOpacity={fade}
-              stroke="#0B1220" strokeOpacity="0.4" strokeWidth="1" />
+              fill={`url(#tr-panel-${j % LANE_PALETTE.length})`} fillOpacity={fade}
+              stroke="#05070C" strokeOpacity="0.55" strokeWidth="1.5" />
           );
         });
       })}
@@ -183,16 +205,26 @@ export default function PlayField({
       {Array.from({ length: lanes + 1 }, (_, i) => {
         const [x0, y0] = ringPoint(gFar, arc, i, ringRot);
         const [x1, y1] = ringPoint(gNear, arc, i, ringRot);
-        return <line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke={colors.accent} strokeOpacity="0.12" strokeWidth="1" />;
+        return <line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke={colors.accent} strokeOpacity="0.32" strokeWidth="1.5" />;
       })}
 
-      {/* Wireframe bands over the tiles */}
+      {/* Structural ribs over the tiles, each with an inner cyan light strip */}
       {bands.map((z, i) => {
         const g = ringGeom(z, scroll, amp, vertical);
         const pts = Array.from({ length: lanes + 1 }, (_, j) => ptStr(ringPoint(g, arc, j, ringRot))).join(' ');
-        return <polygon key={i} points={pts} fill="none" stroke={colors.accent}
-          strokeOpacity={z < 1.2 ? 0.35 : 0.14} strokeWidth="1" />;
+        return (
+          <g key={i}>
+            <polygon points={pts} fill="none" stroke="#3A4A63"
+              strokeOpacity={z < 1.2 ? 0.75 : 0.35} strokeWidth={z < 1.2 ? 3 : 2} />
+            <polygon points={pts} fill="none" stroke={colors.accent}
+              strokeOpacity={z < 1.2 ? 0.45 : 0.18} strokeWidth="1" />
+          </g>
+        );
       })}
+
+      {/* Depth fog swallowing the far end of the corridor */}
+      <circle cx={gFar.cx.toFixed(1)} cy={gFar.cy.toFixed(1)} r={(gFar.r * 1.9).toFixed(1)}
+        fill="url(#tr-fog)" />
 
       {/* Obstacles: distinct 3D-styled objects floating on the circumference.
           Everything else is open passage — only an object's own lane hits. */}
