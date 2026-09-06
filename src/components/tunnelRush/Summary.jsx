@@ -41,7 +41,7 @@ export default function Summary({ summary, colors, patientId }) {
         <div className="grid grid-cols-2 gap-3 mb-3">
           {cell('Accuracy', `${Math.round((summary.accuracy || 0) * 100)}%`)}
           {cell('Median RT', fmtMs(summary.medianReactionMs))}
-          {cell('Gates Cleared', summary.dodges ?? 0)}
+          {cell('Obstacles Dodged', summary.dodges ?? 0)}
           {cell('Total Rotations', summary.rotations ?? 0)}
         </div>
 
@@ -62,7 +62,7 @@ export default function Summary({ summary, colors, patientId }) {
         </div>
 
         <p className="text-xs mb-6" style={{ color: colors.muted }}>
-          {summary.gates ?? 0} gates encountered · avg RT {fmtMs(summary.avgReactionMs)} ·
+          {summary.obstacles ?? 0} obstacles encountered · avg RT {fmtMs(summary.avgReactionMs)} ·
           ended: {summary.endReason || 'completed'}
         </p>
 

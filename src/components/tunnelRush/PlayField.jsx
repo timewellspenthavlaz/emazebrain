@@ -4,8 +4,9 @@ import { VIEW_DEPTH } from '@/lib/tunnelRush/config';
 
 /**
  * PlayField — the tunnel stage. SVG/CSS pseudo-3D: polygonal wireframe bands
- * recede to a vanishing point; gates render as crimson blocked arcs with the
- * guaranteed opening left clear; procedural objects mark the danger lanes.
+ * recede to a vanishing point; obstacles render as distinct crimson-accented
+ * objects floating on the tunnel's inner circumference — everywhere else is
+ * open passage.
  * The patient's position is the glowing cyan wedge at the bottom.
  */
 
@@ -41,7 +42,7 @@ function useStars() {
 }
 
 export default function PlayField({
-  angle, scroll, gates, lanes, colors, scene,
+  angle, scroll, obstacles, lanes, colors, scene,
   objectOrientation, started, hitFlash, reduceMotion,
 }) {
   const arc = (Math.PI * 2) / lanes;
@@ -57,10 +58,10 @@ export default function PlayField({
     bands.push({ z, r: (R * F) / (F + z) });
   }
 
-  // Visible gates (world z relative to the patient plane).
-  const visibleGates = (gates || [])
-    .map((g) => ({ ...g, z: g.z - scroll }))
-    .filter((g) => g.z > 0 && g.z <= VIEW_DEPTH);
+  // Visible obstacles (world z relative to the patient plane).
+  const visibleObstacles = (obstacles || [])
+    .map((o) => ({ ...o, z: o.z - scroll }))
+    .filter((o) => o.z > 0 && o.z <= VIEW_DEPTH);
 
   return (
     <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
@@ -131,46 +132,27 @@ export default function PlayField({
           strokeOpacity={b.z < 1.2 ? 0.4 : 0.16} strokeWidth="1" />
       ))}
 
-      {/* Gates: crimson blocked arcs, cyan hairline ring, open lane clear */}
-      {visibleGates.map((g) => {
-        const zNear = Math.max(0.02, g.z + 0.34);
-        const rFar = (R * F) / (F + g.z);
-        const rNear = (R * F) / (F + zNear);
+      {/* Obstacles: distinct 3D-styled objects floating on the circumference.
+          Everything else is open passage — only an object's own lane hits. */}
+      {visibleObstacles.map((o) => {
+        const r = ((R * F) / (F + o.z)) * 0.84; // floating slightly inside the wall
+        const aMid = (o.lane + 0.5) * arc + angle + Math.PI / 2;
+        const [x, y] = proj(r, aMid);
+        const s = Math.max(0.06, (r * arc * 0.92) / 100);
+        const rotDeg = ((aMid + Math.PI / 2) * 180) / Math.PI;
+        const near = o.z < 1.5;
         return (
-          <g key={g.id}>
-            {/* full-ring hairline at the gate plane */}
-            <polygon points={ringPoints(rFar, lanes, angle)}
-              fill="none" stroke={colors.accent} strokeOpacity="0.5" strokeWidth="2" />
-            {/* blocked lanes */}
-            {g.blocked.map((lane) => {
-              const a0 = lane * arc + angle + Math.PI / 2;
-              const a1 = a0 + arc;
-              const [x1n, y1n] = proj(rNear, a0);
-              const [x2n, y2n] = proj(rNear, a1);
-              const [x2f, y2f] = proj(rFar, a1);
-              const [x1f, y1f] = proj(rFar, a0);
-              return (
-                <polygon key={lane}
-                  points={`${x1n.toFixed(1)},${y1n.toFixed(1)} ${x2n.toFixed(1)},${y2n.toFixed(1)} ${x2f.toFixed(1)},${y2f.toFixed(1)} ${x1f.toFixed(1)},${y1f.toFixed(1)}`}
-                  fill={colors.hit} fillOpacity={g.z < 1.5 ? 0.75 : 0.5}
-                  stroke={colors.hit} strokeOpacity="0.9" strokeWidth="1.5" />
-              );
-            })}
-            {/* wall objects on the blocked lanes */}
-            {g.objects.map((o, oi) => {
-              const aMid = (o.lane + 0.5) * arc + angle + Math.PI / 2;
-              const rMid = (rNear + rFar) / 2;
-              const [x, y] = proj(rMid, aMid);
-              const s = Math.max(0.06, (rMid * arc * 0.72) / 100);
-              const rotDeg = ((aMid + Math.PI / 2) * 180) / Math.PI;
-              return (
-                <g key={oi} transform={`translate(${x.toFixed(1)},${y.toFixed(1)}) scale(${s.toFixed(3)})`}>
-                  <ObjectGlyph type={o.type} label={o.label} colors={colors}
-                    uid={`${g.id}-${oi}`} orientation={objectOrientation}
-                    rotationDeg={rotDeg} />
-                </g>
-              );
-            })}
+          <g key={o.id} transform={`translate(${x.toFixed(1)},${y.toFixed(1)}) scale(${s.toFixed(3)})`}>
+            {/* depth shadow — cheap 3D read */}
+            <rect x="-50" y="-50" width="100" height="100" rx="16"
+              fill="#000000" fillOpacity={near ? 0.45 : 0.3} transform="translate(7,9)" />
+            {/* crimson blocker panel */}
+            <rect x="-52" y="-52" width="104" height="104" rx="16"
+              fill={colors.hit} fillOpacity={near ? 0.3 : 0.18}
+              stroke={colors.hit} strokeWidth="3" />
+            {/* procedural glyph tinted as danger */}
+            <ObjectGlyph type={o.type} label={o.label} colors={{ ...colors, accent: colors.hit }}
+              uid={String(o.id)} orientation={objectOrientation} rotationDeg={rotDeg} />
           </g>
         );
       })}

@@ -1,14 +1,19 @@
 /**
  * Tunnel Rush — telemetry. Raw event log + derived session metrics, built so
- * the summary is recomputable from gateEvents[] alone. Results are delivered
- * through the shared sendGameResults utility (lands in GameSession via the
- * existing receiveGameResults backend function).
+ * the summary is recomputable from obstacleEvents[] alone. Results are
+ * delivered through the shared sendGameResults utility (lands in GameSession
+ * via the existing receiveGameResults backend function).
+ *
+ * Hybrid scoring: steady points per distance unit travelled + a dodge bonus
+ * with a streak multiplier per obstacle passed (capped as before).
  */
 
 import { sendGameResults } from '@/lib/gameResultSender';
-import { GAME_ID, VERSION, GATES_PER_LEVEL } from './config';
+import { GAME_ID, VERSION, OBSTACLES_PER_LEVEL } from './config';
 
-const MAX_STORED_GATES = 250; // cap the per-gate payload for entity field size
+const MAX_STORED_OBSTACLES = 250; // cap the per-obstacle payload for entity field size
+const DISTANCE_POINTS_PER_UNIT = 0.5;
+const HIT_PENALTY = 5;
 
 export class TunnelRushMetrics {
   constructor(cfg) {
@@ -20,10 +25,13 @@ export class TunnelRushMetrics {
     this.startedAt = Date.now();
     this.endedAt = null;
     this.events = [];
-    this.gateEvents = [];
+    this.obstacleEvents = [];
     this.truncated = false;
 
-    this.score = 0;
+    this.score = 0;          // hybrid total (fractional; rounded at payload time)
+    this.dodgePoints = 0;
+    this.distancePoints = 0;
+    this.distanceUnits = 0;
     this.hits = 0;
     this.dodges = 0;
     this.streak = 0;
@@ -49,43 +57,52 @@ export class TunnelRushMetrics {
     this.log('ROTATE', { dir });
   }
 
-  recordGate({ gate, lane, hit, reactionMs }) {
-    this.gateEvents.push({
-      gate: gate.id, t: this._t(), lane, blocked: gate.blocked,
-      hit, reactionMs, objects: gate.objects,
+  // Hybrid scoring: steady points per distance unit travelled.
+  addDistance(units) {
+    if (!units || units <= 0) return;
+    this.distanceUnits += units;
+    const pts = units * DISTANCE_POINTS_PER_UNIT;
+    this.distancePoints += pts;
+    this.score += pts;
+  }
+
+  recordObstacle({ obstacle, lane, hit, reactionMs, speed }) {
+    this.obstacleEvents.push({
+      obstacle: obstacle.id, t: this._t(), lane, hit, reactionMs, speed,
+      type: obstacle.type, label: obstacle.label,
     });
-    if (this.gateEvents.length > MAX_STORED_GATES) {
-      this.gateEvents.splice(0, this.gateEvents.length - MAX_STORED_GATES);
+    if (this.obstacleEvents.length > MAX_STORED_OBSTACLES) {
+      this.obstacleEvents.splice(0, this.obstacleEvents.length - MAX_STORED_OBSTACLES);
       this.truncated = true;
     }
 
     if (hit) {
       this.hits += 1;
       this.streak = 0;
-      this.score = Math.max(0, this.score - 5);
+      this.score = Math.max(0, this.score - HIT_PENALTY);
       this.livesLost += 1;
-      this.log('HIT', { gate: gate.id, lane });
+      this.log('HIT', { obstacle: obstacle.id, lane });
     } else {
       this.dodges += 1;
       this.streak += 1;
       this.bestStreak = Math.max(this.bestStreak, this.streak);
-      this.score += 10 + Math.min(this.streak, 10) * 2;
-      this.log('DODGE', { gate: gate.id, lane, reactionMs });
+      const gain = 10 + Math.min(this.streak, 10) * 2;
+      this.dodgePoints += gain;
+      this.score += gain;
+      this.log('DODGE', { obstacle: obstacle.id, lane, reactionMs });
     }
 
-    const pl = this.perLane[lane] || (this.perLane[lane] = { gates: 0, dodges: 0 });
-    pl.gates += 1;
+    const pl = this.perLane[lane] || (this.perLane[lane] = { obstacles: 0, dodges: 0 });
+    pl.obstacles += 1;
     if (!hit) pl.dodges += 1;
-    for (const o of gate.objects) {
-      const po = this.perObjectType[o.type] || (this.perObjectType[o.type] = { seen: 0 });
-      po.seen += 1;
-    }
+    const po = this.perObjectType[obstacle.type] || (this.perObjectType[obstacle.type] = { seen: 0 });
+    po.seen += 1;
   }
 
   recordLevelUp(level) {
     this.level = level;
     this.maxLevelReached = Math.max(this.maxLevelReached, level);
-    this.score += GATES_PER_LEVEL * 2.5; // level bonus (rounded at derive time)
+    this.score += OBSTACLES_PER_LEVEL * 2.5; // level bonus (rounded at derive time)
     this.log('LEVEL_UP', { level });
   }
 
@@ -105,22 +122,31 @@ export class TunnelRushMetrics {
   mean(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }
 
   derive() {
-    const gates = this.gateEvents.length;
-    const reactions = this.gateEvents.map((e) => e.reactionMs).filter((r) => r != null);
+    const obstacles = this.obstacleEvents.length;
+    const reactions = this.obstacleEvents.map((e) => e.reactionMs).filter((r) => r != null);
+    const speeds = this.obstacleEvents.map((e) => e.speed).filter((s) => s != null);
     return {
-      gates,
+      obstacles,
       dodges: this.dodges,
       hits: this.hits,
-      accuracy: gates ? this.dodges / gates : 0,
-      hitRate: gates ? this.hits / gates : 0,
+      accuracy: obstacles ? this.dodges / obstacles : 0,
+      hitRate: obstacles ? this.hits / obstacles : 0,
       avgReactionMs: this.mean(reactions),
       medianReactionMs: this.median(reactions),
-      // gates the patient never rotated for — an attention/engagement flag
-      noMoveRate: gates ? (gates - reactions.length) / gates : 0,
+      // obstacles the patient never rotated for — an attention/engagement flag
+      noMoveRate: obstacles ? (obstacles - reactions.length) / obstacles : 0,
       rotations: this.rotations,
       bestStreak: this.bestStreak,
       levelReached: this.maxLevelReached,
       livesRemaining: this.lives > 0 ? Math.max(0, this.lives - this.livesLost) : 0,
+      // hybrid score breakdown
+      distanceUnits: this.distanceUnits,
+      distancePoints: this.distancePoints,
+      dodgePoints: this.dodgePoints,
+      // adaptive-speed profile
+      avgSpeed: this.mean(speeds),
+      speedStart: speeds.length ? speeds[0] : null,
+      speedEnd: speeds.length ? speeds[speeds.length - 1] : null,
       perLane: this.perLane,
       perObjectType: this.perObjectType,
     };
@@ -146,7 +172,7 @@ export class TunnelRushMetrics {
         input_method: 'touch/keys',
         endReason,
         summary,
-        gates: this.gateEvents,
+        obstacles: this.obstacleEvents,
         config: {
           objectType: this.cfg.objectType, difficulty: this.cfg.difficulty,
           startLevel: this.cfg.level, lanes: this.cfg.lanes,
@@ -157,11 +183,11 @@ export class TunnelRushMetrics {
           objectOrientation: this.cfg.objectOrientation, lang: this.cfg.lang,
         },
         integrity: {
-          warnings: this.truncated ? ['gate_events_truncated'] : [],
+          warnings: this.truncated ? ['obstacle_events_truncated'] : [],
         },
       },
-      level_history: this.gateEvents.map((e) => ({
-        gate: e.gate, hit: e.hit, lane: e.lane, reaction_ms: e.reactionMs,
+      level_history: this.obstacleEvents.map((e) => ({
+        obstacle: e.obstacle, hit: e.hit, lane: e.lane, reaction_ms: e.reactionMs,
       })),
     };
   }

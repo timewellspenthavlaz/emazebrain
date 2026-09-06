@@ -4,37 +4,37 @@ import { Button } from '@/components/ui/button';
 const COPY = {
   en: {
     title: 'Tunnel Rush',
-    body: 'Rotate the tunnel so the open gap reaches you when each gate arrives — arrow keys, swipe, or the on-screen buttons.',
+    body: 'Steer left and right to dodge the floating objects — the rest of the tunnel is always open. Arrow keys, swipe, or the on-screen buttons.',
     hint: 'Your first rotation launches the tunnel and starts the timer.',
     button: 'Got it!',
   },
   he: {
     title: 'טאנל ראש',
-    body: 'סובבו את המנהרה כך שהפתח הפתוח יגיע אליכם כשהשער מתקרב — חצים במקלדת, החלקה או כפתורי המסך.',
+    body: 'זזו שמאלה וימינה כדי לחמוק מהעצמים המרחפים — שאר המנהרה פתוחה תמיד. חצים במקלדת, החלקה או כפתורי המסך.',
     hint: 'הסיבוב הראשון מתחיל את המנהרה ואת הטיימר.',
     button: 'הבנתי!',
   },
   fr: {
     title: 'Tunnel Rush',
-    body: 'Tournez le tunnel pour que l\u2019ouverture arrive face à vous à chaque porte — flèches, glissement ou boutons à l\u2019écran.',
+    body: 'Esquivez les objets flottants en vous déplaçant à gauche et à droite — le reste du tunnel est toujours ouvert. Flèches, glissement ou boutons à l\u2019écran.',
     hint: 'Votre première rotation lance le tunnel et le chronomètre.',
     button: 'Compris !',
   },
   es: {
     title: 'Tunnel Rush',
-    body: 'Gira el túnel para que la abertura llegue a ti en cada puerta — flechas, deslizar o los botones en pantalla.',
+    body: 'Esquiva los objetos flotantes moviéndote a la izquierda y a la derecha — el resto del túnel siempre está abierto. Flechas, deslizar o los botones en pantalla.',
     hint: 'Tu primer giro lanza el túnel y el cronómetro.',
     button: '¡Entendido!',
   },
   ru: {
     title: 'Tunnel Rush',
-    body: 'Поворачивайте туннель, чтобы открытый проём оказывался перед вами у каждых ворот — стрелки, свайп или экранные кнопки.',
+    body: 'Уворачивайтесь от летящих навстречу объектов, двигаясь влево и вправо — остальная часть туннеля всегда открыта. Стрелки, свайп или экранные кнопки.',
     hint: 'Первый поворот запускает туннель и таймер.',
     button: 'Понятно!',
   },
   zh: {
     title: '隧道冲刺',
-    body: '旋转隧道，让开口在每道门到达时正对你 — 使用方向键、滑动或屏幕按钮。',
+    body: '左右移动躲避迎面而来的漂浮物体 — 隧道的其余部分始终畅通。使用方向键、滑动或屏幕按钮。',
     hint: '第一次旋转将启动隧道和计时器。',
     button: '明白了！',
   },

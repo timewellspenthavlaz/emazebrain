@@ -20,7 +20,7 @@ export default function TunnelRush() {
 
   // ---- state ----
   const [phase, setPhase] = useState('instructions'); // instructions | ready | playing | summary
-  const [frame, setFrame] = useState({ angle: 0, scroll: 0, gates: [] });
+  const [frame, setFrame] = useState({ angle: 0, scroll: 0, obstacles: [] });
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(cfg.lives);
   const [level, setLevel] = useState(cfg.level);
@@ -38,6 +38,7 @@ export default function TunnelRush() {
   const pillTimeoutRef = useRef(null);
   const audioRef = useRef(null);
   const touchXRef = useRef(null);
+  const lastScrollRef = useRef(0);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
@@ -104,17 +105,17 @@ export default function TunnelRush() {
     setPhase('summary');
   }, []);
 
-  // ---- gate resolution ----
+  // ---- obstacle resolution ----
   const handlePassed = useCallback((events) => {
     const m = metrics.current;
     for (const ev of events) {
-      m.recordGate(ev);
+      m.recordObstacle(ev);
       if (ev.hit) {
         ping(130, 0.14, 'sawtooth');
         showPill(false, m.lives > 0 && m.lives - m.livesLost <= 0 ? 'Game Over' : 'Hit! −1 life');
         setHitFlash((n) => n + 1);
         if (m.lives > 0 && m.lives - m.livesLost <= 0) {
-          setScore(m.score);
+          setScore(Math.round(m.score));
           endSession('hitLimit');
           return;
         }
@@ -123,7 +124,7 @@ export default function TunnelRush() {
         showPill(true, `+${10 + Math.min(m.streak, 10) * 2}`);
       }
     }
-    setScore(m.score);
+    setScore(Math.round(m.score));
     setLives(Math.max(0, m.lives - m.livesLost));
   }, [endSession, ping, showPill]);
 
@@ -148,11 +149,14 @@ export default function TunnelRush() {
             ping(660, 0.1);
             setTimeout(() => ping(880, 0.12), 110);
           }
+          const travelled = eng.scroll - lastScrollRef.current;
+          lastScrollRef.current = eng.scroll;
+          metrics.current.addDistance(travelled);
           metrics.current.setRotations(eng.rotations);
         }
         // ease the visual angle toward the logical angle (rotation + spin)
         visualAngleRef.current += (eng.angle - visualAngleRef.current) * Math.min(1, dt * 12);
-        setFrame({ angle: visualAngleRef.current, scroll: eng.scroll, gates: eng.gates });
+        setFrame({ angle: visualAngleRef.current, scroll: eng.scroll, obstacles: eng.obstacles });
       }
       raf = requestAnimationFrame(loop);
     };
@@ -235,7 +239,7 @@ export default function TunnelRush() {
       <PlayField
         angle={frame.angle}
         scroll={frame.scroll}
-        gates={frame.gates}
+        obstacles={frame.obstacles}
         lanes={cfg.lanes}
         colors={colors}
         scene={cfg.scene}

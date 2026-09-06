@@ -11,18 +11,23 @@ export const GAME_ID = 'tunnel-rush';
 export const VERSION = '1.0.0';
 export const MAX_LEVEL = 10;
 export const VIEW_DEPTH = 7;      // world units of visible tunnel ahead
-export const GATES_PER_LEVEL = 8; // progressive level-up cadence
+export const OBSTACLES_PER_LEVEL = 8; // progressive level-up cadence
 
 export const LANES_ALLOWED = [6, 8, 10, 12];
 
+// Difficulty bands for adaptive pacing: the run starts at speedMin and creeps
+// toward speedMax while the patient dodges cleanly; a hit eases it back down.
+// obstacleSpacing is the depth gap between objects (smaller = faster cadence);
+// maxJump bounds how far the next object's lane can sit from the previous
+// one, so every object stays reachable at the current speed.
 export const DIFFICULTY_PRESETS = {
-  easy:   { speed: 3.2, gateSpacing: 2.6, blockedFrac: 0.30, openWidth: 2, maxJump: 2 },
-  medium: { speed: 4.2, gateSpacing: 2.2, blockedFrac: 0.42, openWidth: 2, maxJump: 3 },
-  hard:   { speed: 5.4, gateSpacing: 1.8, blockedFrac: 0.55, openWidth: 1, maxJump: 4 },
+  easy:   { speedMin: 2.4, speedMax: 3.6, obstacleSpacing: 5.0, maxJump: 2 },
+  medium: { speedMin: 3.0, speedMax: 4.6, obstacleSpacing: 4.2, maxJump: 3 },
+  hard:   { speedMin: 3.8, speedMax: 5.8, obstacleSpacing: 3.4, maxJump: 4 },
 };
 
-// Per-level tuning (level 1..10): a little faster and a little denser each level.
-export const LEVEL_BONUS = { speed: 0.08, blocked: 0.015 };
+// Per-level tuning (level 1..10): the band's ceiling rises slightly each level.
+export const LEVEL_BONUS = { speed: 0.08 };
 
 // Themes follow the committed palette: Primary Dark #090D16, Surface #121826,
 // Cyan #00F0FF, Amber #FFB800, Crimson #FF2E63.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Star, Target, Heart, Gauge, Activity, Zap, ShieldAlert, MoveHorizontal } from 'lucide-react';
+import { Clock, Star, Target, Heart, Gauge, Activity, Zap, ShieldAlert, MoveHorizontal, Route, Coins } from 'lucide-react';
 import StatusBadge from '@/components/admin/StatusBadge';
 import moment from 'moment';
 import MetricBox from './MetricBox';
@@ -64,7 +64,7 @@ export default function TunnelRushSessionCard({ g }) {
         <MetricBox icon={Gauge} label="Accuracy" value={fmtPct(s.accuracy)} color="text-primary" />
         <MetricBox icon={ShieldAlert} label="Hit Rate" value={fmtPct(s.hitRate)} color="text-red-500" />
         <MetricBox icon={Zap} label="Dodges" value={s.dodges ?? 0} color="text-emerald-600" />
-        <MetricBox icon={Activity} label="Gates" value={s.gates ?? 0} />
+        <MetricBox icon={Activity} label="Obstacles" value={s.obstacles ?? 0} />
       </div>
 
       {/* Reaction times */}
@@ -75,13 +75,16 @@ export default function TunnelRushSessionCard({ g }) {
         <MetricBox icon={Zap} label="Best Streak" value={s.bestStreak ?? 0} color="text-amber-500" />
       </div>
 
-      {/* Attention flag */}
+      {/* Adaptive pacing + hybrid score breakdown */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <MetricBox icon={ShieldAlert} label="No-Move Rate" value={fmtPct(s.noMoveRate)} color="text-amber-600" />
+        <MetricBox icon={Gauge} label="Avg Speed" value={s.avgSpeed != null && !isNaN(s.avgSpeed) ? s.avgSpeed.toFixed(1) : '—'} />
+        <MetricBox icon={Route} label="Distance" value={s.distanceUnits != null && !isNaN(s.distanceUnits) ? `${Math.round(s.distanceUnits)}u` : '—'} />
+        <MetricBox icon={Coins} label="Dodge Points" value={s.dodgePoints != null && !isNaN(s.dodgePoints) ? Math.round(s.dodgePoints) : '—'} />
       </div>
 
       <p className="text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border">
-        Reaction time = from gate spawn to the patient's last rotation before it arrived; null (never moved) feeds the No-Move Rate.
+        Reaction time = from object spawn to the patient's last rotation before it arrived; null (never moved) feeds the No-Move Rate. Speed is adaptive — it rises with clean dodges and eases back after a hit.
       </p>
     </div>
   );
