@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import ObjectGlyph from './Objects';
-import { VIEW_DEPTH } from '@/lib/tunnelRush/config';
+import ShipGlyph from './Ship';
+import { VIEW_DEPTH, laneColor, CURVE_AMPS } from '@/lib/tunnelRush/config';
 
 /**
- * PlayField — the tunnel stage. SVG/CSS pseudo-3D: polygonal wireframe bands
- * recede to a vanishing point; obstacles render as distinct crimson-accented
- * objects floating on the tunnel's inner circumference — everywhere else is
- * open passage.
- * The patient's position is the glowing cyan wedge at the bottom.
+ * PlayField — the tunnel stage. SVG/CSS pseudo-3D with a visibly bending
+ * corridor: every depth ring is displaced along a world-space arc, so the
+ * tunnel sweeps left/right (and up/down at difficulty 3+) with a clearly
+ * shifted vanishing point. Each lane carries its own color-blocked tile
+ * band, and the patient flies a low-poly spaceship — docked at the mouth
+ * (`fixed` mode) or sliding around the circumference (`move` mode).
  */
 
 const CX = 500;
@@ -15,20 +17,33 @@ const CY = 500;
 const R = 470;
 const F = 3;           // focal length for depth perspective
 const BAND = 0.55;     // spacing between wireframe bands
+const PANEL = 1.1;      // depth of each colored tile band
 
-function proj(r, ang) {
-  return [CX + r * Math.cos(ang), CY + r * Math.sin(ang)];
+// World-space bending pattern. Displacement is anchored at the patient
+// plane (zero there) and grows with depth — the far end of the corridor
+// visibly arcs away, and the pattern sweeps past as the patient travels.
+function bend(worldZ, amp, vertical) {
+  return {
+    x: amp * (Math.sin(worldZ * 0.55) * 0.7 + Math.sin(worldZ * 0.23 + 1.3) * 0.3),
+    y: vertical ? amp * 0.45 * Math.sin(worldZ * 0.37 + 2.1) : 0,
+  };
 }
 
-function ringPoints(r, lanes, angle) {
-  const arc = (Math.PI * 2) / lanes;
-  const pts = [];
-  for (let i = 0; i <= lanes; i++) {
-    const [x, y] = proj(r, i * arc + angle + Math.PI / 2);
-    pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-  }
-  return pts.join(' ');
+// Geometry of the ring at screen-depth d: radius + centre offset by the curve.
+function ringGeom(d, scroll, amp, vertical) {
+  const r = (R * F) / (F + d);
+  const damp = 0.55 + 0.45 * (r / R); // far rings shift slightly less than near ones
+  const here = bend(scroll, amp, vertical);
+  const at = bend(scroll + d, amp, vertical);
+  return { r, cx: CX + (at.x - here.x) * damp, cy: CY + (at.y - here.y) * damp };
 }
+
+function ringPoint(g, arc, i, rot) {
+  const a = i * arc + rot + Math.PI / 2;
+  return [g.cx + g.r * Math.cos(a), g.cy + g.r * Math.sin(a)];
+}
+
+const ptStr = (p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
 
 // Deterministic star field for the `stars` scene.
 function useStars() {
@@ -43,25 +58,52 @@ function useStars() {
 
 export default function PlayField({
   angle, scroll, obstacles, lanes, colors, scene,
-  objectOrientation, started, hitFlash, reduceMotion,
+  objectOrientation, shipMode = 'fixed', tilt = 0, speedRatio = 0,
+  difficultyLevel = 3, started, hitFlash, reduceMotion,
 }) {
   const arc = (Math.PI * 2) / lanes;
   const stars = useStars();
+  const amp = CURVE_AMPS[difficultyLevel] || CURVE_AMPS[3];
+  const vertical = difficultyLevel >= 3;
+  // In `move` mode the tunnel stays put and the ship slides instead.
+  const ringRot = shipMode === 'move' ? 0 : angle;
 
-  // Wireframe bands scrolling toward the viewer.
+  // Wireframe band depths, scrolling toward the viewer.
   const bands = [];
   const offset = scroll % BAND;
   for (let k = 0; ; k++) {
     const z = k * BAND - offset;
     if (z < 0.12) continue;
     if (z > VIEW_DEPTH) break;
-    bands.push({ z, r: (R * F) / (F + z) });
+    bands.push(z);
   }
 
-  // Visible obstacles (world z relative to the patient plane).
+  // Colored tile-band ring depths (coarser than the wireframe cadence).
+  const panels = [];
+  const pOff = scroll % PANEL;
+  for (let k = 0; ; k++) {
+    const d = k * PANEL - pOff;
+    if (d > VIEW_DEPTH) break;
+    if (d > 0.05) panels.push(d);
+  }
+
+  // Visible obstacles (depth relative to the patient plane).
   const visibleObstacles = (obstacles || [])
     .map((o) => ({ ...o, z: o.z - scroll }))
     .filter((o) => o.z > 0 && o.z <= VIEW_DEPTH);
+
+  const gNear = ringGeom(0, scroll, amp, vertical);
+  const gFar = ringGeom(VIEW_DEPTH, scroll, amp, vertical);
+
+  // Ship placement: docked at the bottom of the mouth, or sliding around
+  // the circumference opposite the tunnel roll.
+  let shipX = CX;
+  let shipY = CY + R * 0.8;
+  if (shipMode === 'move') {
+    const sa = Math.PI / 2 + 0.5 * arc - angle;
+    shipX = CX + R * 0.82 * Math.cos(sa);
+    shipY = CY + R * 0.82 * Math.sin(sa);
+  }
 
   return (
     <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
@@ -107,8 +149,8 @@ export default function PlayField({
       {/* Motion-blur speed streaks radiating outward */}
       {!reduceMotion && Array.from({ length: 18 }, (_, i) => {
         const ang = i * (Math.PI / 9) + 0.31;
-        const [x0, y0] = proj(R * 0.66, ang);
-        const [x1, y1] = proj(R, ang);
+        const [x0, y0] = [CX + R * 0.66 * Math.cos(ang), CY + R * 0.66 * Math.sin(ang)];
+        const [x1, y1] = [CX + R * Math.cos(ang), CY + R * Math.sin(ang)];
         return (
           <line key={i} x1={x0} y1={y0} x2={x1} y2={y1}
             stroke={colors.accent} strokeWidth="1.5" opacity="0">
@@ -117,27 +159,49 @@ export default function PlayField({
         );
       })}
 
-      {/* Corner rays — the 1px hairline cyan grid down the tunnel walls */}
+      {/* Color-blocked tile bands — one distinct color per lane */}
+      {panels.slice(0, -1).map((d1, k) => {
+        const d2 = panels[k + 1];
+        const g1 = ringGeom(d1, scroll, amp, vertical);
+        const g2 = ringGeom(d2, scroll, amp, vertical);
+        const fade = Math.max(0.06, 0.34 - d1 * 0.04);
+        return Array.from({ length: lanes }, (_, j) => {
+          const a1 = ringPoint(g1, arc, j, ringRot);
+          const b1 = ringPoint(g1, arc, j + 1, ringRot);
+          const a2 = ringPoint(g2, arc, j, ringRot);
+          const b2 = ringPoint(g2, arc, j + 1, ringRot);
+          return (
+            <polygon key={`${k}-${j}`}
+              points={`${ptStr(a1)} ${ptStr(b1)} ${ptStr(b2)} ${ptStr(a2)}`}
+              fill={laneColor(j)} fillOpacity={fade}
+              stroke="#0B1220" strokeOpacity="0.4" strokeWidth="1" />
+          );
+        });
+      })}
+
+      {/* Corner rays — hairlines converging along the curved walls */}
       {Array.from({ length: lanes + 1 }, (_, i) => {
-        const ang = i * arc + angle + Math.PI / 2;
-        const [x0, y0] = proj(R * F / (F + VIEW_DEPTH), ang);
-        const [x1, y1] = proj(R, ang);
+        const [x0, y0] = ringPoint(gFar, arc, i, ringRot);
+        const [x1, y1] = ringPoint(gNear, arc, i, ringRot);
         return <line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke={colors.accent} strokeOpacity="0.12" strokeWidth="1" />;
       })}
 
-      {/* Wireframe bands */}
-      {bands.map((b, i) => (
-        <polygon key={i} points={ringPoints(b.r, lanes, angle)}
-          fill="none" stroke={colors.accent}
-          strokeOpacity={b.z < 1.2 ? 0.4 : 0.16} strokeWidth="1" />
-      ))}
+      {/* Wireframe bands over the tiles */}
+      {bands.map((z, i) => {
+        const g = ringGeom(z, scroll, amp, vertical);
+        const pts = Array.from({ length: lanes + 1 }, (_, j) => ptStr(ringPoint(g, arc, j, ringRot))).join(' ');
+        return <polygon key={i} points={pts} fill="none" stroke={colors.accent}
+          strokeOpacity={z < 1.2 ? 0.35 : 0.14} strokeWidth="1" />;
+      })}
 
       {/* Obstacles: distinct 3D-styled objects floating on the circumference.
           Everything else is open passage — only an object's own lane hits. */}
       {visibleObstacles.map((o) => {
-        const r = ((R * F) / (F + o.z)) * 0.84; // floating slightly inside the wall
-        const aMid = (o.lane + 0.5) * arc + angle + Math.PI / 2;
-        const [x, y] = proj(r, aMid);
+        const g = ringGeom(o.z, scroll, amp, vertical);
+        const r = g.r * 0.84; // floating slightly inside the wall
+        const aMid = (o.lane + 0.5) * arc + ringRot + Math.PI / 2;
+        const x = g.cx + r * Math.cos(aMid);
+        const y = g.cy + r * Math.sin(aMid);
         const s = Math.max(0.06, (r * arc * 0.92) / 100);
         const rotDeg = ((aMid + Math.PI / 2) * 180) / Math.PI;
         const near = o.z < 1.5;
@@ -157,19 +221,9 @@ export default function PlayField({
         );
       })}
 
-      {/* Patient wedge — fixed at the bottom, glowing cyan */}
-      <g>
-        <line x1={CX} y1={CY + R + 26} x2={CX} y2={CY + R * 0.45}
-          stroke={colors.accent} strokeWidth="2" strokeOpacity={started ? 0.75 : 0.3} />
-        <polygon
-          points={`${CX - 13},${CY + R + 12} ${CX + 13},${CY + R + 12} ${CX},${CY + R - 10}`}
-          fill={colors.accent} opacity={started ? 0.95 : 0.5} />
-        {started && (
-          <polygon points={`${CX - 13},${CY + R + 12} ${CX + 13},${CY + R + 12} ${CX},${CY + R - 10}`} fill={colors.accent}>
-            <animate attributeName="opacity" values="1;0.55;1" dur="1.4s" repeatCount="indefinite" />
-          </polygon>
-        )}
-      </g>
+      {/* Patient spaceship */}
+      <ShipGlyph colors={colors} started={started} tilt={tilt} speedRatio={speedRatio}
+        x={shipX} y={shipY} reduceMotion={reduceMotion} />
 
       {/* Crimson hit vignette pulse */}
       {hitFlash > 0 && (

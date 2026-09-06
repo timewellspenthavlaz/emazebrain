@@ -15,6 +15,21 @@ export const OBSTACLES_PER_LEVEL = 8; // progressive level-up cadence
 
 export const LANES_ALLOWED = [6, 8, 10, 12];
 
+// shipMode — how steering is presented:
+//   fixed: the ship stays docked at the bottom while the tunnel rolls around it
+//   move:  the tunnel stays put and the ship slides around its circumference
+export const SHIP_MODES = ['fixed', 'move'];
+
+// Distinct color-blocked tile band per lane (reference-image palette);
+// repeats cleanly for any supported lane count.
+export const LANE_PALETTE = ['#00FF00', '#228B22', '#4169E1', '#0000FF', '#FF0000', '#B22222'];
+export const laneColor = (lane) => LANE_PALETTE[lane % LANE_PALETTE.length];
+
+// Bend amplitude (viewBox units at the far ring) per difficulty_level 1-5:
+// 1-2 gentle scenery sweeps, 3 strong sweeps + vertical dips,
+// 4-5 the strongest, most demanding arcs.
+export const CURVE_AMPS = { 1: 90, 2: 140, 3: 200, 4: 260, 5: 320 };
+
 // Difficulty bands for adaptive pacing: the run starts at speedMin and creeps
 // toward speedMax while the patient dodges cleanly; a hit eases it back down.
 // obstacleSpacing is the depth gap between objects (smaller = faster cadence);
@@ -94,6 +109,9 @@ export function parseParams(searchParams) {
   const direction = ['none', 'cw', 'ccw', 'alternate'].includes(directionRaw) ? directionRaw : 'none';
   const spinSpeed = clamp(num('spinSpeed', 14), 0, 60);
 
+  const shipModeRaw = norm(get('shipMode', get('shipmode', 'fixed')));
+  const shipMode = SHIP_MODES.includes(shipModeRaw) ? shipModeRaw : 'fixed';
+
   const themeRaw = norm(get('theme', get('colorTheme', 'dark')));
   const theme = THEMES[themeRaw] ? themeRaw : 'dark';
 
@@ -118,7 +136,7 @@ export function parseParams(searchParams) {
   return {
     patientId, callbackUrl, timeToPlay, difficultyLevel, br, lang,
     difficulty, objectType, objectSet, objectOrientation,
-    lanes, level, progressive, direction, spinSpeed, theme, scene, pageBg,
+    lanes, level, progressive, direction, spinSpeed, shipMode, theme, scene, pageBg,
     bgColor, accentColor, timerPosition, showScore, lives,
     sound, autoStart, debug, reduceMotion,
   };

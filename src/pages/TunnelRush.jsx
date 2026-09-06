@@ -20,7 +20,7 @@ export default function TunnelRush() {
 
   // ---- state ----
   const [phase, setPhase] = useState('instructions'); // instructions | ready | playing | summary
-  const [frame, setFrame] = useState({ angle: 0, scroll: 0, obstacles: [] });
+  const [frame, setFrame] = useState({ angle: 0, scroll: 0, obstacles: [], tilt: 0, speedRatio: 0 });
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(cfg.level);
   const [timeLeft, setTimeLeft] = useState(cfg.timeToPlay);
@@ -34,6 +34,7 @@ export default function TunnelRush() {
   const startedRef = useRef(false);
   const sentRef = useRef(false);
   const visualAngleRef = useRef(0);
+  const tiltRef = useRef(0);
   const timeUpRef = useRef(false);
   const pillTimeoutRef = useRef(null);
   const shakeTimeoutRef = useRef(null);
@@ -157,7 +158,14 @@ export default function TunnelRush() {
         }
         // ease the visual angle toward the logical angle (rotation + spin)
         visualAngleRef.current += (eng.angle - visualAngleRef.current) * Math.min(1, dt * 12);
-        setFrame({ angle: visualAngleRef.current, scroll: eng.scroll, obstacles: eng.obstacles });
+        // bank on steer input, then ease back to level
+        tiltRef.current += (0 - tiltRef.current) * Math.min(1, dt * 3.5);
+        const span = Math.max(0.01, eng.bandMax() - eng.bandMin());
+        setFrame({
+          angle: visualAngleRef.current, scroll: eng.scroll, obstacles: eng.obstacles,
+          tilt: tiltRef.current,
+          speedRatio: Math.max(0, Math.min(1, (eng.speed - eng.bandMin()) / span)),
+        });
       }
       raf = requestAnimationFrame(loop);
     };
@@ -186,6 +194,7 @@ export default function TunnelRush() {
     if (phaseRef.current !== 'ready' && phaseRef.current !== 'playing') return;
     engine.current?.rotate(dir);
     metrics.current?.recordRotation(dir);
+    tiltRef.current = dir * 16;
     if (!startedRef.current) {
       startedRef.current = true;
       phaseRef.current = 'playing';
@@ -244,6 +253,10 @@ export default function TunnelRush() {
         colors={colors}
         scene={cfg.scene}
         objectOrientation={cfg.objectOrientation}
+        shipMode={cfg.shipMode}
+        tilt={frame.tilt}
+        speedRatio={frame.speedRatio}
+        difficultyLevel={cfg.difficultyLevel}
         started={startedRef.current}
         hitFlash={hitFlash}
         reduceMotion={cfg.reduceMotion}
