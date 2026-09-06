@@ -9,6 +9,7 @@ import OrbitalOrderSessionCard from '@/components/games/OrbitalOrderSessionCard'
 import BeepBeepSessionCard from '@/components/games/BeepBeepSessionCard';
 import EchoKeysSessionCard from '@/components/games/EchoKeysSessionCard';
 import PeekPeekSessionCard from '@/components/games/PeekPeekSessionCard';
+import TunnelRushSessionCard from '@/components/games/TunnelRushSessionCard';
 import { compareRows, GAME_META } from './gameMatrixHelpers';
 import MetricBox from './MetricBox';
 import { TrendContext } from './TrendContext';
@@ -30,6 +31,7 @@ function SessionDetailCardInner({ g }) {
     case 'beep-beep': return <BeepBeepSessionCard g={g} />;
     case 'echo-keys': return <EchoKeysSessionCard g={g} />;
     case 'peek-peek': return <PeekPeekSessionCard g={g} />;
+    case 'tunnel-rush': return <TunnelRushSessionCard g={g} />;
     default: return <BlockCrasherDetail g={g} />;
   }
 }

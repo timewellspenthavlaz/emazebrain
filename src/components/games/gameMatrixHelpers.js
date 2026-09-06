@@ -8,6 +8,7 @@ export const GAME_META = {
   'beep-beep': { label: 'Beep Beep', icon: '🚗', color: 'rose' },
   'echo-keys': { label: 'Echo Keys', icon: '🎹', color: 'violet' },
   'peek-peek': { label: 'Peek Peek', icon: '🧠', color: 'indigo' },
+  'tunnel-rush': { label: 'Tunnel Rush', icon: '🌀', color: 'cyan' },
 };
 
 const isNum = (v) => v != null && typeof v === 'number' && !isNaN(v);
@@ -28,6 +29,8 @@ export function keyMetricFor(g) {
       return { label: 'Accuracy', value: isNum(m.accuracy) ? `${Math.round(m.accuracy * 100)}%` : '—' };
     case 'peek-peek':
       return { label: 'First-try Acc', value: isNum(m.first_attempt_accuracy_ex_final) ? `${Math.round(m.first_attempt_accuracy_ex_final * 100)}%` : '—' };
+    case 'tunnel-rush':
+      return { label: 'Accuracy', value: isNum(m.summary?.accuracy) ? `${Math.round(m.summary.accuracy * 100)}%` : '—' };
     case 'block-crasher':
       return { label: 'Miss Rate', value: isNum(m.paddle_miss_rate) ? `${Math.round(m.paddle_miss_rate * 100)}%` : '—' };
     default:
@@ -45,6 +48,7 @@ function accuracyOf(g) {
     case 'block-crasher': return m.paddle_miss_rate != null ? 1 - m.paddle_miss_rate : null;
     case 'echo-keys': return m.accuracy ?? null;
     case 'peek-peek': return m.first_attempt_accuracy_ex_final ?? null;
+    case 'tunnel-rush': return m.summary?.accuracy ?? null;
     default: return null;
   }
 }
@@ -122,6 +126,14 @@ export function compareRows(gameId, a, b) {
       rows.push(pick('First-Round Misses', ma.first_round_misses_mean, mb.first_round_misses_mean, (v) => v.toFixed(2)));
       rows.push(pick('Learning Slope', ma.learning_slope, mb.learning_slope, (v) => v.toFixed(3)));
       break;
+    case 'tunnel-rush': {
+      const sa = ma.summary || {}, sb = mb.summary || {};
+      rows.push(pick('Accuracy', sa.accuracy, sb.accuracy, pct));
+      rows.push(pick('Hit Rate', sa.hitRate, sb.hitRate, pct));
+      rows.push(pick('Median RT (ms)', sa.medianReactionMs, sb.medianReactionMs, (v) => Math.round(v)));
+      rows.push(pick('Rotations', sa.rotations, sb.rotations));
+      break;
+    }
     case 'block-crasher':
       rows.push(pick('Miss Rate', ma.paddle_miss_rate, mb.paddle_miss_rate, pct));
       rows.push(pick('Bricks Destroyed', ma.total_bricks_destroyed, mb.total_bricks_destroyed));

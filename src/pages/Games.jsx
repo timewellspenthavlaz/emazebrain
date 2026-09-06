@@ -237,6 +237,11 @@ export default function Games() {
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-500" title="Play Game"><Play className="w-4 h-4" /></Button>
                           </a>
                         )}
+                        {item.title?.toLowerCase().includes('tunnel') && (
+                          <a href={playHref('/tunnel-rush?objectType=shapes&difficulty=medium&lanes=8&theme=dark&time_to_play=120&lives=3')} onClick={guardPlay}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-cyan-600" title="Play Game"><Play className="w-4 h-4" /></Button>
+                          </a>
+                        )}
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Quick Preview"><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}><Pencil className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleStatus(item)}>

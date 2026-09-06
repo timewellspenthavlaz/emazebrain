@@ -112,6 +112,21 @@ const REGISTRY = {
     control_first_tap_x: { label: 'Control: First-Tap X', get: (g) => num(g.metrics?.control_mean_first_tap_x), lowerIsBetter: false },
     control_latency_asym: { label: 'Control: Latency Asym', get: (g) => num(g.metrics?.control_first_tap_latency_asymmetry_ms), unit: 'ms', lowerIsBetter: false },
   },
+  'tunnel-rush': {
+    duration: { label: 'Duration', get: (g) => num(g.duration_seconds), unit: 's', lowerIsBetter: true },
+    score: { label: 'Score', get: (g) => num(g.score), lowerIsBetter: false },
+    level_reached: { label: 'Level Reached', get: (g) => num(g.highest_level), lowerIsBetter: false },
+    lives_left: { label: 'Lives Left', get: (g) => num(g.lives_remaining), lowerIsBetter: false },
+    accuracy: { label: 'Accuracy', get: (g) => num(g.metrics?.summary?.accuracy), unit: '%', isPct: true, lowerIsBetter: false },
+    hit_rate: { label: 'Hit Rate', get: (g) => num(g.metrics?.summary?.hitRate), unit: '%', isPct: true, lowerIsBetter: true },
+    avg_reaction: { label: 'Avg Reaction', get: (g) => num(g.metrics?.summary?.avgReactionMs), unit: 'ms', lowerIsBetter: true },
+    median_rt: { label: 'Median RT', get: (g) => num(g.metrics?.summary?.medianReactionMs), unit: 'ms', lowerIsBetter: true },
+    dodges: { label: 'Dodges', get: (g) => num(g.metrics?.summary?.dodges), lowerIsBetter: false },
+    gates: { label: 'Gates', get: (g) => num(g.metrics?.summary?.gates), lowerIsBetter: false },
+    rotations: { label: 'Rotations', get: (g) => num(g.metrics?.summary?.rotations), lowerIsBetter: false },
+    best_streak: { label: 'Best Streak', get: (g) => num(g.metrics?.summary?.bestStreak), lowerIsBetter: false },
+    no_move_rate: { label: 'No-Move Rate', get: (g) => num(g.metrics?.summary?.noMoveRate), unit: '%', isPct: true, lowerIsBetter: true },
+  },
 };
 
 export function getMetricByLabel(gameId, label) {
