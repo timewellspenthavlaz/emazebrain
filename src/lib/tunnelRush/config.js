@@ -20,9 +20,11 @@ export const LANES_ALLOWED = [6, 8, 10, 12];
 //   move:  the tunnel stays put and the ship slides around its circumference
 export const SHIP_MODES = ['fixed', 'move'];
 
-// Distinct color-blocked tile band per lane (reference-image palette);
-// repeats cleanly for any supported lane count.
-export const LANE_PALETTE = ['#00FF00', '#228B22', '#4169E1', '#0000FF', '#FF0000', '#B22222'];
+// Distinct tile band per lane — monochromatic sci-fi industrial family
+// (bright cyan-teal ↔ deep shadow tones, per the reference corridor),
+// alternating light/dark so adjacent lanes stay readable; repeats cleanly
+// for any supported lane count.
+export const LANE_PALETTE = ['#0A9396', '#04303A', '#00B4C5', '#00566B', '#0E7C8B', '#062830'];
 export const laneColor = (lane) => LANE_PALETTE[lane % LANE_PALETTE.length];
 
 // Bend amplitude (viewBox units at the far ring) per difficulty_level 1-5:

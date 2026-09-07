@@ -186,7 +186,7 @@ export default function PlayField({
         const d2 = panels[k + 1];
         const g1 = ringGeom(d1, scroll, amp, vertical);
         const g2 = ringGeom(d2, scroll, amp, vertical);
-        const fade = Math.max(0.06, 0.34 - d1 * 0.04);
+        const fade = Math.max(0.08, 0.52 - d1 * 0.06);
         return Array.from({ length: lanes }, (_, j) => {
           const a1 = ringPoint(g1, arc, j, ringRot);
           const b1 = ringPoint(g1, arc, j + 1, ringRot);
@@ -196,7 +196,7 @@ export default function PlayField({
             <polygon key={`${k}-${j}`}
               points={`${ptStr(a1)} ${ptStr(b1)} ${ptStr(b2)} ${ptStr(a2)}`}
               fill={`url(#tr-panel-${j % LANE_PALETTE.length})`} fillOpacity={fade}
-              stroke="#05070C" strokeOpacity="0.55" strokeWidth="1.5" />
+              stroke="#002025" strokeOpacity="0.8" strokeWidth="1.5" />
           );
         });
       })}
@@ -208,6 +208,14 @@ export default function PlayField({
         return <line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke={colors.accent} strokeOpacity="0.32" strokeWidth="1.5" />;
       })}
 
+      {/* Emissive cyan light bars running down each lane's centre */}
+      {Array.from({ length: lanes }, (_, j) => {
+        const [x0, y0] = ringPoint(gNear, arc, j + 0.5, ringRot);
+        const [x1, y1] = ringPoint(gFar, arc, j + 0.5, ringRot);
+        return <line key={`bar-${j}`} x1={x0} y1={y0} x2={x1} y2={y1}
+          stroke={colors.accent} strokeOpacity="0.5" strokeWidth="2.5" strokeLinecap="round" />;
+      })}
+
       {/* Structural ribs over the tiles, each with an inner cyan light strip */}
       {bands.map((z, i) => {
         const g = ringGeom(z, scroll, amp, vertical);
@@ -217,7 +225,7 @@ export default function PlayField({
             <polygon points={pts} fill="none" stroke="#3A4A63"
               strokeOpacity={z < 1.2 ? 0.75 : 0.35} strokeWidth={z < 1.2 ? 3 : 2} />
             <polygon points={pts} fill="none" stroke={colors.accent}
-              strokeOpacity={z < 1.2 ? 0.45 : 0.18} strokeWidth="1" />
+              strokeOpacity={z < 1.2 ? 0.7 : 0.22} strokeWidth={z < 1.2 ? 1.5 : 1} />
           </g>
         );
       })}
