@@ -8,6 +8,7 @@ import {
   Film,
   Gamepad2,
   Network,
+  FileText,
   BarChart3,
   Settings,
   ChevronLeft,
@@ -36,7 +37,8 @@ const navGroups = [
     items: [
       { label: 'Videos', icon: Film, path: '/videos' },
       { label: 'Games', icon: Gamepad2, path: '/games' },
-      { label: 'Taxonomy', icon: Network, path: '/taxonomy' }
+      { label: 'Taxonomy', icon: Network, path: '/taxonomy' },
+      { label: 'Documentation', icon: FileText, path: '/documentation' }
     ]
   },
   {

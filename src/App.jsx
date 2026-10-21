@@ -25,6 +25,7 @@ import BeepBeep from '@/pages/BeepBeep';
 import EchoKeys from '@/pages/EchoKeys';
 import PeekPeek from '@/pages/PeekPeek';
 import TunnelRush from '@/pages/TunnelRush';
+import Documentation from '@/pages/Documentation';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
           <Route path="/videos" element={<Videos />} />
           <Route path="/games" element={<Games />} />
           <Route path="/taxonomy" element={<Taxonomy />} />
+          <Route path="/documentation" element={<Documentation />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
